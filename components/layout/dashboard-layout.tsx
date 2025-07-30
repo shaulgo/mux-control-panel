@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Sidebar } from './sidebar';
 import { Header } from './header';
-import { cn } from '@/lib/utils';
+import { Sidebar } from './sidebar';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,9 +13,9 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="bg-background flex h-screen">
       {/* Sidebar for desktop */}
-      <div className="hidden md:flex">
+      <div className="flex">
         <Sidebar />
       </div>
 
@@ -27,7 +26,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             className="absolute inset-0 bg-black/50"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full">
+          <div className="absolute top-0 left-0 h-full">
             <Sidebar />
           </div>
         </div>
@@ -39,11 +38,9 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
           title={title}
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         />
-        
+
         <main className="flex-1 overflow-auto">
-          <div className="container mx-auto p-6">
-            {children}
-          </div>
+          <div className="container mx-auto p-6">{children}</div>
         </main>
       </div>
     </div>
