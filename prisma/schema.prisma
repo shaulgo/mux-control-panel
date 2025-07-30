@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Library {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  assets      LibraryAsset[]
+
+  @@map("libraries")
+}
+
+model LibraryAsset {
+  library   Library @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+  libraryId String
+  assetId   String
+  position  Int
+  createdAt DateTime @default(now())
+
+  @@id([libraryId, assetId])
+  @@unique([libraryId, position])
+  @@map("library_assets")
+}
+
+model DailyUsage {
+  day             DateTime @id @db.Date
+  streamedMinutes BigInt   @default(0)
+  storageGb       Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("daily_usage")
+}
+
+model UploadToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  url       String
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("upload_tokens")
+}
+
+model AssetMetadata {
+  assetId     String   @id
+  title       String?
+  description String?
+  tags        String[] @default([])
+  duration    Float?
+  aspectRatio String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("asset_metadata")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
+}
