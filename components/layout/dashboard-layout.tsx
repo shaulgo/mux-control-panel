@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from './header';
-import { Sidebar } from './sidebar';
+import { ModernSidebar } from './modern-sidebar';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -11,25 +11,29 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, title }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="bg-background flex h-screen">
       {/* Sidebar for desktop */}
-      <div className="flex">
-        <Sidebar />
+      <div className="hidden md:flex">
+        <ModernSidebar
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+        />
       </div>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <>
           <div
-            className="absolute inset-0 bg-black/50"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="absolute top-0 left-0 h-full">
-            <Sidebar />
+          <div className="fixed top-0 left-0 z-50 h-full w-64 md:hidden">
+            <ModernSidebar collapsed={false} onCollapsedChange={() => {}} />
           </div>
-        </div>
+        </>
       )}
 
       {/* Main content */}
@@ -39,8 +43,8 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <main className="flex-1 overflow-auto">
-          <div className="container mx-auto p-6">{children}</div>
+        <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 via-white to-gray-50/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900/50">
+          <div className="container mx-auto max-w-7xl p-6">{children}</div>
         </main>
       </div>
     </div>

@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick, title }: HeaderProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
+    <header className="flex h-16 items-center justify-between border-b border-gray-200/60 bg-white/80 px-6 shadow-sm backdrop-blur-sm">
       <div className="flex items-center space-x-4">
         <Button
           variant="ghost"
@@ -22,12 +22,10 @@ export function Header({ onMenuClick, title }: HeaderProps) {
           <Menu className="h-4 w-4" />
           <span className="sr-only">Toggle menu</span>
         </Button>
-        
-        {title && (
-          <h1 className="text-xl font-semibold">{title}</h1>
-        )}
+
+        {title && <h1 className="text-xl font-semibold">{title}</h1>}
       </div>
-      
+
       <div className="flex items-center space-x-4">
         <ThemeToggle />
       </div>
