@@ -10,7 +10,24 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Top-level ignore block so ESLint skips generated/build artifacts
+  {
+    ignores: [
+      "**/node_modules/**",
+      ".next/**",
+      ".next/**/**",
+      ".next/types/**",
+      "coverage/**",
+      "test-results/**",
+      ".playwright/**",
+      "dist/**",
+      "build/**"
+    ]
+  },
+
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+
+  // Project rules
   {
     rules: {
       // React specific rules

@@ -85,9 +85,10 @@ export function useAssetPolling(assetId: string, enabled: boolean = true) {
       return response.json();
     },
     enabled: enabled && !!assetId,
-    refetchInterval: queryData => {
+    refetchInterval: query => {
       // Stop polling if asset is ready or errored
-      const asset = (queryData as { data: MuxAsset } | undefined)?.data;
+      const data = query.state.data as { data: MuxAsset } | undefined;
+      const asset = data?.data;
       if (asset?.status === 'ready' || asset?.status === 'errored') {
         return false;
       }

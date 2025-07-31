@@ -29,7 +29,6 @@ const PeriodQuerySchema = z.object({
 
 type PeriodQuery = z.infer<typeof PeriodQuerySchema>;
 
-const ApiResponse = <T>(data: T) => ({ ok: true as const, data });
 const ApiError = (code: string, message: string) => ({
   ok: false as const,
   error: { code, message },
@@ -38,7 +37,7 @@ const ApiError = (code: string, message: string) => ({
 export async function GET(request: NextRequest) {
   try {
     // AuthN: require a logged-in session; do not redirect from API
-    const session = await requireAuth();
+    await requireAuth();
 
     const url = new URL(request.url);
     const parse = PeriodQuerySchema.safeParse({
@@ -107,7 +106,7 @@ export async function GET(request: NextRequest) {
     // Get streaming data from Mux Data API
     let streamingGB = 0;
     try {
-      const streamingResponse = await muxData.getMetrics('video_startup_time', {
+      await muxData.getMetrics('video_startup_time', {
         timeframe: [`${period}:days`],
       });
 

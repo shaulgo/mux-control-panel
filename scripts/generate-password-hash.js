@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const argon2 = require('argon2');
-const readline = require('readline');
+import argon2 from 'argon2';
+import readline from 'readline';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -9,7 +9,7 @@ const rl = readline.createInterface({
 });
 
 async function generateHash() {
-  rl.question('Enter password to hash: ', async (password) => {
+  rl.question('Enter password to hash: ', async password => {
     if (!password) {
       console.error('Password is required');
       process.exit(1);

@@ -113,9 +113,10 @@ export const muxData = {
 
   // Metrics
   async getMetrics(metricId: string, params?: Record<string, unknown>) {
-    // @ts-expect-error - Mux SDK has strict metric ID types, but we need flexibility
+    // Cast to any to bypass strict literal metricId requirement from SDK typings.
     return withRateLimit(() =>
-      mux.data.metrics.getOverallValues(metricId, params)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mux.data.metrics.getOverallValues(metricId as any, params as any)
     );
   },
 
