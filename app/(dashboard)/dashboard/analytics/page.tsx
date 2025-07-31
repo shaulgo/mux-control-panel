@@ -19,89 +19,107 @@ import {
 } from '@/components/ui/table';
 import {
   BarChart3,
-  Clock,
   Eye,
   Globe,
   Monitor,
-  Play,
   Smartphone,
   Tablet,
   TrendingUp,
-  Users,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
-// Mock analytics data
-const analyticsData = {
-  overview: {
-    totalViews: 12543,
-    uniqueViewers: 8921,
-    totalPlayTime: 45678, // in minutes
-    avgViewDuration: 342, // in seconds
-  },
-  topVideos: [
-    {
-      id: 'HxV1UxVR...',
-      title: 'Product Demo Video',
-      views: 2341,
-      duration: '5:23',
-      engagement: 85,
-    },
-    {
-      id: 'KmP2QwEr...',
-      title: 'Tutorial: Getting Started',
-      views: 1876,
-      duration: '8:45',
-      engagement: 78,
-    },
-    {
-      id: 'LnQ3RtYu...',
-      title: 'Customer Success Story',
-      views: 1654,
-      duration: '3:12',
-      engagement: 92,
-    },
-    {
-      id: 'MoR4SvZx...',
-      title: 'Feature Walkthrough',
-      views: 1432,
-      duration: '6:34',
-      engagement: 71,
-    },
-    {
-      id: 'NpS5TwAb...',
-      title: 'Company Overview',
-      views: 1287,
-      duration: '4:56',
-      engagement: 68,
-    },
-  ],
-  deviceBreakdown: [
-    { device: 'Desktop', percentage: 45, count: 5644 },
-    { device: 'Mobile', percentage: 38, count: 4766 },
-    { device: 'Tablet', percentage: 17, count: 2133 },
-  ],
-  geographicData: [
-    { country: 'United States', views: 4521, percentage: 36 },
-    { country: 'United Kingdom', views: 2134, percentage: 17 },
-    { country: 'Canada', views: 1876, percentage: 15 },
-    { country: 'Germany', views: 1543, percentage: 12 },
-    { country: 'Australia', views: 1234, percentage: 10 },
-    { country: 'Others', views: 1235, percentage: 10 },
-  ],
+type AnalyticsSummary = {
+  overview: { totalViews: number };
+  topVideos: Array<{ id: string; title: string; views: number }>;
+  deviceBreakdown: Array<{ device: string; views: number }>;
+  geographicData: Array<{ country: string; views: number }>;
 };
 
 export default function AnalyticsPage() {
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const [data, setData] = useState<AnalyticsSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const formatPlayTime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch('/api/analytics/summary?period=30', {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        const json = await res.json();
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error?.message ?? `HTTP ${res.status}`);
+        }
+        if (!cancelled) {
+          setData(json.data as AnalyticsSummary);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(
+            e && typeof e === 'object' && 'message' in e
+              ? String((e as { message?: unknown }).message)
+              : 'Failed to load analytics'
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const totalViews = data?.overview.totalViews ?? 0;
+
+  const deviceComputed = useMemo(() => {
+    const total =
+      data?.deviceBreakdown.reduce((acc, d) => acc + d.views, 0) ?? 0;
+    return (data?.deviceBreakdown ?? []).map(d => {
+      const percentage = total > 0 ? Math.round((d.views / total) * 100) : 0;
+      return { ...d, percentage };
+    });
+  }, [data]);
+
+  const geoComputed = useMemo(() => {
+    const total =
+      data?.geographicData.reduce((acc, g) => acc + g.views, 0) ?? 0;
+    return (data?.geographicData ?? []).map(g => {
+      const percentage = total > 0 ? Math.round((g.views / total) * 100) : 0;
+      return { ...g, percentage };
+    });
+  }, [data]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-foreground text-4xl font-bold tracking-tight">
+            Analytics
+          </h1>
+          <p className="text-muted-foreground max-w-2xl text-lg">
+            Loading analytics…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-foreground text-4xl font-bold tracking-tight">
+            Analytics
+          </h1>
+          <p className="text-destructive max-w-2xl text-lg">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -128,91 +146,14 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              {analyticsData.overview.totalViews.toLocaleString()}
+              {totalViews.toLocaleString()}
             </div>
             <div className="mt-2 flex items-center space-x-1">
               <div className="bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400 inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
                 <TrendingUp className="h-3 w-3" />
-                <span>+18%</span>
+                <span>30d</span>
               </div>
-              <span className="text-muted-foreground text-xs">
-                vs last month
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <h3 className="text-muted-foreground text-sm font-medium tracking-wide">
-              Unique Viewers
-            </h3>
-            <div className="bg-accent-500/10 rounded-lg p-2">
-              <Users className="text-accent-600 dark:text-accent-400 h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-foreground text-4xl font-bold tracking-tight">
-              {analyticsData.overview.uniqueViewers.toLocaleString()}
-            </div>
-            <div className="mt-2 flex items-center space-x-1">
-              <div className="bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400 inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
-                <TrendingUp className="h-3 w-3" />
-                <span>+12%</span>
-              </div>
-              <span className="text-muted-foreground text-xs">
-                vs last month
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <h3 className="text-muted-foreground text-sm font-medium tracking-wide">
-              Total Play Time
-            </h3>
-            <div className="bg-accent-500/10 rounded-lg p-2">
-              <Play className="text-accent-600 dark:text-accent-400 h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-foreground text-4xl font-bold tracking-tight">
-              {formatPlayTime(analyticsData.overview.totalPlayTime)}
-            </div>
-            <div className="mt-2 flex items-center space-x-1">
-              <div className="bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400 inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
-                <TrendingUp className="h-3 w-3" />
-                <span>+25%</span>
-              </div>
-              <span className="text-muted-foreground text-xs">
-                vs last month
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <h3 className="text-muted-foreground text-sm font-medium tracking-wide">
-              Avg. View Duration
-            </h3>
-            <div className="bg-accent-500/10 rounded-lg p-2">
-              <Clock className="text-accent-600 dark:text-accent-400 h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-foreground text-4xl font-bold tracking-tight">
-              {formatDuration(analyticsData.overview.avgViewDuration)}
-            </div>
-            <div className="mt-2 flex items-center space-x-1">
-              <div className="bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400 inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
-                <TrendingUp className="h-3 w-3" />
-                <span>+8%</span>
-              </div>
-              <span className="text-muted-foreground text-xs">
-                vs last month
-              </span>
+              <span className="text-muted-foreground text-xs">aggregated</span>
             </div>
           </CardContent>
         </Card>
@@ -228,7 +169,7 @@ export default function AnalyticsPage() {
               <span>Top Performing Videos</span>
             </CardTitle>
             <CardDescription>
-              Most viewed videos in the last 30 days
+              Most viewed videos in the selected period
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -237,17 +178,16 @@ export default function AnalyticsPage() {
                 <TableRow>
                   <TableHead>Video</TableHead>
                   <TableHead>Views</TableHead>
-                  <TableHead>Engagement</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {analyticsData.topVideos.map(video => (
+                {(data?.topVideos ?? []).map(video => (
                   <TableRow key={video.id}>
                     <TableCell>
                       <div>
                         <div className="text-sm font-medium">{video.title}</div>
                         <div className="text-muted-foreground text-xs">
-                          {video.id} • {video.duration}
+                          {video.id}
                         </div>
                       </div>
                     </TableCell>
@@ -256,19 +196,15 @@ export default function AnalyticsPage() {
                         {video.views.toLocaleString()}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Progress
-                          value={video.engagement}
-                          className="h-2 w-16"
-                        />
-                        <span className="text-muted-foreground text-sm">
-                          {video.engagement}%
-                        </span>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))}
+                {(!data?.topVideos || data.topVideos.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-muted-foreground">
+                      No data
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -287,11 +223,11 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analyticsData.deviceBreakdown.map((device, index) => {
+              {deviceComputed.map((device, index) => {
                 const Icon =
-                  device.device === 'Desktop'
+                  device.device.toLowerCase() === 'desktop'
                     ? Monitor
-                    : device.device === 'Mobile'
+                    : device.device.toLowerCase() === 'mobile'
                       ? Smartphone
                       : Tablet;
                 return (
@@ -304,7 +240,7 @@ export default function AnalyticsPage() {
                       <div>
                         <div className="font-medium">{device.device}</div>
                         <div className="text-muted-foreground text-sm">
-                          {device.count.toLocaleString()} views
+                          {device.views.toLocaleString()} views
                         </div>
                       </div>
                     </div>
@@ -318,6 +254,9 @@ export default function AnalyticsPage() {
                   </div>
                 );
               })}
+              {deviceComputed.length === 0 && (
+                <div className="text-muted-foreground text-sm">No data</div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -343,7 +282,7 @@ export default function AnalyticsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {analyticsData.geographicData.map((country, index) => (
+              {geoComputed.map((country, index) => (
                 <TableRow key={index}>
                   <TableCell className="font-medium">
                     {country.country}
@@ -355,6 +294,13 @@ export default function AnalyticsPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {geoComputed.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-muted-foreground">
+                    No data
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

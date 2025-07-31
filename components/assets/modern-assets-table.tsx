@@ -30,6 +30,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface ModernAssetsTableProps {
   assets: MuxAsset[];
@@ -46,6 +47,7 @@ export function ModernAssetsTable({
   onDuplicateAsset,
   isLoading = false,
 }: ModernAssetsTableProps) {
+  const router = useRouter();
   const getStatusBadge = (status: string) => {
     const variants = {
       ready: {
@@ -165,7 +167,11 @@ export function ModernAssetsTable({
             Upload your first video to get started with Mux video processing and
             delivery.
           </p>
-          <Button className="bg-accent-500 hover:bg-accent-600 text-white">
+          <Button
+            className="bg-accent-500 hover:bg-accent-600 text-white"
+            onClick={() => router.push('/dashboard/upload')}
+            aria-label="Upload Asset"
+          >
             Upload Asset
           </Button>
         </div>

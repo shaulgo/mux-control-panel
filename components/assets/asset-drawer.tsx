@@ -12,6 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { MuxAsset } from '@/lib/mux/types';
 import { formatDate, formatDuration } from '@/lib/utils';
+import MuxPlayer from '@mux/mux-player-react';
 import { Copy } from 'lucide-react';
 import Image from 'next/image';
 
@@ -58,17 +59,32 @@ export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
-          {/* Asset Preview */}
-          {thumbnailUrl && (
-            <div className="bg-muted aspect-video w-full overflow-hidden rounded-lg">
-              <Image
-                src={thumbnailUrl}
-                alt="Asset preview"
-                width={640}
-                height={360}
-                className="h-full w-full object-cover"
+          {/* Asset Preview / Player */}
+          {playbackId ? (
+            <div className="aspect-video w-full overflow-hidden rounded-lg">
+              <MuxPlayer
+                playbackId={playbackId}
+                streamType="on-demand"
+                autoPlay={false}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'black',
+                }}
               />
             </div>
+          ) : (
+            thumbnailUrl && (
+              <div className="bg-muted aspect-video w-full overflow-hidden rounded-lg">
+                <Image
+                  src={thumbnailUrl}
+                  alt="Asset preview"
+                  width={640}
+                  height={360}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )
           )}
 
           <Tabs defaultValue="details" className="w-full">
@@ -139,6 +155,23 @@ export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
             <TabsContent value="playback" className="space-y-4">
               {asset.playback_ids && asset.playback_ids.length > 0 ? (
                 <div className="space-y-4">
+                  {/* Inline Mux Player */}
+                  <div className="rounded-lg border p-3">
+                    <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
+                      <MuxPlayer
+                        playbackId={asset.playback_ids?.[0]?.id as string}
+                        streamType="on-demand"
+                        autoPlay={false}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </div>
+                    <p className="text-muted-foreground mt-2 text-xs">
+                      Secure playback uses the first playback ID. Additional IDs
+                      are listed below.
+                    </p>
+                  </div>
+
+                  {/* Playback IDs and URLs */}
                   {asset.playback_ids.map(playbackId => (
                     <div key={playbackId.id} className="rounded-lg border p-4">
                       <div className="flex items-center justify-between">

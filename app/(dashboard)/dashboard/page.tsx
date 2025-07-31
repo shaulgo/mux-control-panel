@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { useAssets, useDeleteAsset } from '@/hooks/use-assets';
 import type { MuxAsset } from '@/lib/mux/types';
 import { Grid, List, Search, Upload } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function AssetsPage() {
@@ -24,6 +25,7 @@ export default function AssetsPage() {
 
   const { data: assetsData, isLoading, error } = useAssets({ search });
   const deleteAssetMutation = useDeleteAsset();
+  const router = useRouter();
 
   const handleViewAsset = (asset: MuxAsset) => {
     setSelectedAsset(asset);
@@ -52,7 +54,11 @@ export default function AssetsPage() {
             Manage your video assets and view their details
           </p>
         </div>
-        <Button className="bg-blue-500 text-white shadow-lg transition-all duration-300 hover:bg-blue-600 hover:shadow-xl">
+        <Button
+          className="bg-blue-500 text-white shadow-lg transition-all duration-300 hover:bg-blue-600 hover:shadow-xl"
+          onClick={() => router.push('/dashboard/upload')}
+          aria-label="Upload Asset"
+        >
           <Upload className="mr-2 h-4 w-4" />
           Upload Asset
         </Button>

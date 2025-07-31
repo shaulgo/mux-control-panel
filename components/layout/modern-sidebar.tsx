@@ -179,7 +179,7 @@ export function ModernSidebar({
                 'group relative flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                 'hover:bg-accent-50 hover:text-accent-700 focus-visible:ring-accent-500 focus-visible:ring-2 focus-visible:outline-none',
                 isActive
-                  ? 'bg-accent-50 text-accent-700 border-accent-200 border shadow-sm'
+                  ? 'bg-accent-50 text-accent-700 border-accent border shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               )}
               title={isCollapsed ? item.name : undefined}

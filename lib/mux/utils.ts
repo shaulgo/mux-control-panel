@@ -1,6 +1,11 @@
 import { muxData, muxVideo, type MuxAsset } from './client';
 import type { DirectUpload } from './types';
 
+// Strict output types for analytics helpers to avoid any
+export type MuxCountRow = { value?: number } & Record<string, unknown>;
+export type MuxDeviceRow = MuxCountRow & { device_category?: string };
+export type MuxAssetRow = MuxCountRow & { asset_id?: string };
+
 // Asset utilities
 export async function createAssetFromUrl(url: string): Promise<MuxAsset> {
   const response = await muxVideo.createAsset({
@@ -154,14 +159,71 @@ export async function getViewsByCountry(
     measurement: 'count',
   });
 
-  return response.data.map((item: unknown) => {
-    if (item && typeof item === 'object') {
-      const country = 'country' in item ? String(item.country) : 'Unknown';
-      const views = 'value' in item ? Number(item.value) || 0 : 0;
-      return { country, views };
-    }
-    return { country: 'Unknown', views: 0 };
+  return (response.data as unknown as MuxCountRow[]).map(item => {
+    const rec = item as Record<string, unknown>;
+    const country =
+      typeof rec.country === 'string' && rec.country
+        ? String(rec.country)
+        : 'Unknown';
+    const views =
+      typeof item.value === 'number'
+        ? item.value
+        : Number(item.value ?? 0) || 0;
+    return { country, views };
   });
+}
+
+// New: views grouped by device category (Desktop/Mobile/Tablet/etc)
+export async function getViewsByDevice(
+  timeframe: string[] = ['30:days']
+): Promise<Array<{ device: string; views: number }>> {
+  const response = await muxData.getVideoViews({
+    timeframe,
+    group_by: 'device_category',
+    measurement: 'count',
+  });
+
+  return (response.data as unknown as MuxDeviceRow[]).map(item => {
+    const device =
+      typeof item.device_category === 'string' && item.device_category
+        ? item.device_category
+        : 'Unknown';
+    const views =
+      typeof item.value === 'number'
+        ? item.value
+        : Number(item.value ?? 0) || 0;
+    return { device, views };
+  });
+}
+
+// New: top assets by views, with optional limit
+export async function getTopAssetsByViews(
+  limit: number = 5,
+  timeframe: string[] = ['30:days']
+): Promise<Array<{ assetId: string; views: number }>> {
+  const response = await muxData.getVideoViews({
+    timeframe,
+    group_by: 'asset_id',
+    measurement: 'count',
+    order_direction: 'desc',
+  });
+
+  const items = (response.data as unknown as MuxAssetRow[])
+    .map(item => ({
+      assetId:
+        typeof item.asset_id === 'string' && item.asset_id
+          ? String(item.asset_id)
+          : '',
+      views:
+        typeof item.value === 'number'
+          ? item.value
+          : Number(item.value ?? 0) || 0,
+    }))
+    .filter(i => i.assetId)
+    .sort((a, b) => b.views - a.views)
+    .slice(0, Math.max(0, limit));
+
+  return items;
 }
 
 // Utility functions
