@@ -2,7 +2,13 @@
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Video } from 'lucide-react';
@@ -38,7 +44,7 @@ export function LoginForm() {
       } else {
         setError(data.error || 'Login failed');
       }
-    } catch (error) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -46,19 +52,22 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden">
+    <div className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden px-4">
       {/* Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="from-primary/5 to-secondary/5 absolute inset-0 bg-gradient-to-br via-transparent" />
+      <div className="bg-primary/10 absolute top-1/4 left-1/4 h-96 w-96 animate-pulse rounded-full blur-3xl" />
+      <div
+        className="bg-secondary/10 absolute right-1/4 bottom-1/4 h-96 w-96 animate-pulse rounded-full blur-3xl"
+        style={{ animationDelay: '2s' }}
+      />
 
-      <Card className="w-full max-w-md relative z-10 shadow-2xl border-0 bg-background/95 backdrop-blur-md">
+      <Card className="bg-background/95 relative z-10 w-full max-w-md border-0 shadow-2xl backdrop-blur-md">
         <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="from-primary to-primary/80 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg">
             <Video className="h-8 w-8 text-white" />
           </div>
           <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <CardTitle className="from-foreground to-foreground/70 bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent">
               Welcome Back
             </CardTitle>
             <CardDescription className="text-base">
@@ -75,37 +84,41 @@ export function LoginForm() {
             )}
 
             <div className="space-y-3">
-              <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email Address
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="gm.michal@gmail.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-12 border-border/50 focus:border-primary/50 transition-all duration-300"
+                className="border-border/50 focus:border-primary/50 h-12 transition-all duration-300"
               />
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-12 border-border/50 focus:border-primary/50 transition-all duration-300"
+                className="border-border/50 focus:border-primary/50 h-12 transition-all duration-300"
               />
             </div>
 
             <Button
               type="submit"
               size="lg"
-              className="w-full shadow-lg hover:shadow-xl transition-all duration-300"
+              className="w-full shadow-lg transition-all duration-300 hover:shadow-xl"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -114,12 +127,17 @@ export function LoginForm() {
           </form>
 
           {/* Demo Credentials */}
-          <div className="pt-4 border-t border-border/50">
-            <div className="text-center space-y-2">
-              <p className="text-xs text-muted-foreground">Demo Credentials</p>
-              <div className="text-xs space-y-1">
-                <p><span className="font-medium">Email:</span> gm.michal@gmail.com</p>
-                <p><span className="font-medium">Password:</span> admin123</p>
+          <div className="border-border/50 border-t pt-4">
+            <div className="space-y-2 text-center">
+              <p className="text-muted-foreground text-xs">Demo Credentials</p>
+              <div className="space-y-1 text-xs">
+                <p>
+                  <span className="font-medium">Email:</span>{' '}
+                  gm.michal@gmail.com
+                </p>
+                <p>
+                  <span className="font-medium">Password:</span> admin123
+                </p>
               </div>
             </div>
           </div>

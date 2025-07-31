@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom';
+import React from 'react';
+import { vi } from 'vitest';
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
@@ -16,19 +18,24 @@ vi.mock('next/navigation', () => ({
 
 // Mock Next.js image
 vi.mock('next/image', () => ({
-  default: ({ src, alt, ...props }: any) => {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={alt} {...props} />;
+  default: ({
+    src,
+    alt,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement>) => {
+    return React.createElement('img', { src, alt, ...props });
   },
 }));
 
 // Mock environment variables
-process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
-process.env.MUX_TOKEN_ID = 'test_token_id';
-process.env.MUX_TOKEN_SECRET = 'test_token_secret';
-process.env.MUX_ENV_KEY = 'env_test';
-process.env.SESSION_SECRET = 'test_session_secret';
+Object.assign(process.env, {
+  NODE_ENV: 'test',
+  DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+  MUX_TOKEN_ID: 'test_token_id',
+  MUX_TOKEN_SECRET: 'test_token_secret',
+  MUX_ENV_KEY: 'env_test',
+  SESSION_SECRET: 'test_session_secret',
+});
 
 // Global test utilities
 global.ResizeObserver = vi.fn().mockImplementation(() => ({

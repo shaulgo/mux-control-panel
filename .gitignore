@@ -121,3 +121,7 @@ temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright test results and reports
+/test-results/
+/playwright-report/

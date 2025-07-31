@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { formatDate, formatDuration } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 import type { MuxAsset } from '@/lib/mux/types';
+import { formatDate, formatDuration } from '@/lib/utils';
+import { Eye, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface AssetsTableProps {
   assets: MuxAsset[];
@@ -51,7 +51,7 @@ export function AssetsTable({
     return (
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-16 animate-pulse rounded bg-muted" />
+          <div key={i} className="bg-muted h-16 animate-pulse rounded" />
         ))}
       </div>
     );
@@ -59,7 +59,7 @@ export function AssetsTable({
 
   if (assets.length === 0) {
     return (
-      <div className="flex h-32 items-center justify-center text-muted-foreground">
+      <div className="text-muted-foreground flex h-32 items-center justify-center">
         No assets found
       </div>
     );
@@ -79,34 +79,28 @@ export function AssetsTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assets.map((asset) => (
+        {assets.map(asset => (
           <TableRow key={asset.id}>
             <TableCell>
               {getThumbnailUrl(asset) ? (
-                <img
+                <Image
                   src={getThumbnailUrl(asset)!}
                   alt="Asset thumbnail"
+                  width={64}
+                  height={40}
                   className="h-10 w-16 rounded object-cover"
                 />
               ) : (
-                <div className="h-10 w-16 rounded bg-muted" />
+                <div className="bg-muted h-10 w-16 rounded" />
               )}
             </TableCell>
-            <TableCell className="font-mono text-sm">
-              {asset.id}
-            </TableCell>
-            <TableCell>
-              {getStatusBadge(asset.status)}
-            </TableCell>
+            <TableCell className="font-mono text-sm">{asset.id}</TableCell>
+            <TableCell>{getStatusBadge(asset.status)}</TableCell>
             <TableCell>
               {asset.duration ? formatDuration(asset.duration) : '—'}
             </TableCell>
-            <TableCell>
-              {asset.aspect_ratio || '—'}
-            </TableCell>
-            <TableCell>
-              {formatDate(asset.created_at)}
-            </TableCell>
+            <TableCell>{asset.aspect_ratio || '—'}</TableCell>
+            <TableCell>{formatDate(asset.created_at)}</TableCell>
             <TableCell>
               <div className="flex items-center space-x-2">
                 <Button

@@ -243,7 +243,7 @@ export function ModernAssetsTable({
                       {asset.id.slice(0, 8)}...
                     </code>
                     <p className="text-muted-foreground text-xs">
-                      {asset.filename || 'Untitled'}
+                      {asset.passthrough || 'Untitled'}
                     </p>
                   </div>
                 </TableCell>

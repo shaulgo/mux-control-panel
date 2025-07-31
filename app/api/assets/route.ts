@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { muxVideo } from '@/lib/mux/client';
 import { requireAuth } from '@/lib/auth/session';
+import { muxVideo } from '@/lib/mux/client';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,9 +19,10 @@ export async function GET(request: NextRequest) {
     // Filter by search if provided
     let assets = response.data;
     if (search) {
-      assets = assets.filter((asset: any) =>
-        asset.id.toLowerCase().includes(search.toLowerCase()) ||
-        asset.passthrough?.toLowerCase().includes(search.toLowerCase())
+      assets = assets.filter(
+        asset =>
+          asset.id.toLowerCase().includes(search.toLowerCase()) ||
+          asset.passthrough?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -34,11 +35,14 @@ export async function GET(request: NextRequest) {
         hasMore: assets.length === limit,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching assets:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch assets' },
-      { status: 500 }
-    );
+
+    const errorMessage =
+      error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : 'Failed to fetch assets';
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

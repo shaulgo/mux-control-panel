@@ -126,7 +126,7 @@ export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
                 <div className="border-destructive/20 bg-destructive/10 rounded-lg border p-4">
                   <h4 className="text-destructive font-medium">Errors</h4>
                   <ul className="mt-2 space-y-1">
-                    {asset.errors.messages.map((message, index) => (
+                    {asset.errors.messages?.map((message, index) => (
                       <li key={index} className="text-destructive text-sm">
                         {message}
                       </li>

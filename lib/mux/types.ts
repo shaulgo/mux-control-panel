@@ -1,51 +1,38 @@
-// Mux Asset types
-export interface MuxAsset {
-  id: string;
-  status: 'preparing' | 'ready' | 'errored';
-  duration?: number;
-  aspect_ratio?: string;
-  created_at: string;
-  playback_ids?: PlaybackId[];
-  mp4_support?: 'none' | 'standard' | 'high';
-  master_access?: 'none' | 'temporary';
-  tracks?: Track[];
-  errors?: {
-    type: string;
-    messages: string[];
-  };
-  passthrough?: string;
+// Import actual Mux SDK types
+import type { MuxAsset, MuxPlaybackID, MuxUpload } from './client';
+
+// Re-export for convenience
+export type { MuxAsset, MuxPlaybackID, MuxUpload };
+
+// Mux API Response Wrappers
+export interface MuxApiResponse<T> {
+  data: T;
 }
 
-export interface PlaybackId {
-  id: string;
-  policy: 'public' | 'signed';
+export interface MuxApiListResponse<T> {
+  data: T[];
 }
 
-export interface Track {
+// Legacy type aliases for backward compatibility
+export type PlaybackId = MuxPlaybackID;
+export type Track = {
   id: string;
   type: 'video' | 'audio' | 'text';
   duration?: number;
   max_width?: number;
   max_height?: number;
   max_frame_rate?: number;
-}
+};
 
-// Direct Upload types
-export interface DirectUpload {
-  id: string;
+// Legacy alias for backward compatibility
+export type DirectUpload = MuxUpload;
+
+// Upload Result types for API responses
+export interface UploadResult {
   url: string;
-  status: 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out';
-  new_asset_settings: {
-    playback_policy?: string[];
-    mp4_support?: string;
-  };
-  asset_id?: string;
-  error?: {
-    type: string;
-    message: string;
-  };
-  cors_origin?: string;
-  created_at: string;
+  success: boolean;
+  asset?: MuxAsset | undefined;
+  error?: string | undefined;
 }
 
 // Analytics types
@@ -104,7 +91,7 @@ export interface WebhookEvent {
   };
   id: string;
   created_at: string;
-  data: any;
+  data: Record<string, unknown>;
   accessor?: string;
   accessor_source?: string;
   request_id?: string;
@@ -117,7 +104,30 @@ export const ASSET_STATUS = {
   ERRORED: 'errored' as const,
 } as const;
 
-export type AssetStatus = typeof ASSET_STATUS[keyof typeof ASSET_STATUS];
+// Specific API Response Types
+export type AssetResponse = MuxApiResponse<MuxAsset>;
+export type AssetListResponse = MuxApiListResponse<MuxAsset>;
+export type UploadResponse = MuxApiResponse<MuxUpload>;
+export type UploadListResponse = MuxApiListResponse<MuxUpload>;
+
+// Upload creation parameters
+export interface UploadCreateParams {
+  cors_origin?: string;
+  new_asset_settings?: {
+    playback_policies?: ('public' | 'signed')[];
+    mp4_support?: string;
+  };
+}
+
+// Asset creation parameters
+export interface AssetCreateParams {
+  inputs: Array<{ url: string }>;
+  playback_policies?: ('public' | 'signed')[];
+  mp4_support?: string;
+  passthrough?: string;
+}
+
+export type AssetStatus = (typeof ASSET_STATUS)[keyof typeof ASSET_STATUS];
 
 export function isAssetReady(asset: MuxAsset): boolean {
   return asset.status === ASSET_STATUS.READY;
@@ -140,7 +150,7 @@ export const UPLOAD_STATUS = {
   TIMED_OUT: 'timed_out' as const,
 } as const;
 
-export type UploadStatus = typeof UPLOAD_STATUS[keyof typeof UPLOAD_STATUS];
+export type UploadStatus = (typeof UPLOAD_STATUS)[keyof typeof UPLOAD_STATUS];
 
 export function isUploadComplete(upload: DirectUpload): boolean {
   return upload.status === UPLOAD_STATUS.ASSET_CREATED;

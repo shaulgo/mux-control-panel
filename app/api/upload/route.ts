@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { muxVideo } from '@/lib/mux/client';
 import { requireAuth } from '@/lib/auth/session';
+import { muxVideo } from '@/lib/mux/client';
 import { uploadUrlsSchema } from '@/lib/validations/upload';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.errors },
+        { error: 'Invalid input', details: validation.error.issues },
         { status: 400 }
       );
     }
@@ -31,22 +31,22 @@ export async function POST(request: NextRequest) {
         results.push({
           url,
           success: true,
-          asset: response.data,
+          asset: response,
         });
-      } catch (error: any) {
+      } catch (error) {
         results.push({
           url,
           success: false,
-          error: error.message || 'Failed to create asset',
+          error: (error as Error).message || 'Failed to create asset',
         });
       }
     }
 
     return NextResponse.json({ results });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to process upload' },
+      { error: (error as Error).message || 'Failed to process upload' },
       { status: 500 }
     );
   }

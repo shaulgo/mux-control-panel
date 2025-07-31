@@ -1,6 +1,11 @@
 import Mux from '@mux/mux-node';
 import PQueue from 'p-queue';
 
+// Re-export Mux types for use in our application
+export type MuxAsset = Mux.Video.Asset;
+export type MuxUpload = Mux.Video.Upload;
+export type MuxPlaybackID = Mux.Video.PlaybackIDs;
+
 if (!process.env.MUX_TOKEN_ID || !process.env.MUX_TOKEN_SECRET) {
   throw new Error('MUX_TOKEN_ID and MUX_TOKEN_SECRET must be set');
 }
@@ -19,16 +24,19 @@ const queue = new PQueue({
 
 // Wrapper function to add rate limiting to Mux API calls
 async function withRateLimit<T>(fn: () => Promise<T>): Promise<T> {
-  return queue.add(fn);
+  return queue.add(fn) as Promise<T>;
 }
 
 export const muxVideo = {
   // Assets
-  async createAsset(input: { input: string; playback_policy?: string[] }) {
+  async createAsset(input: {
+    input: string;
+    playback_policy?: ('public' | 'signed')[];
+  }) {
     return withRateLimit(() =>
       mux.video.assets.create({
-        input: input.input,
-        playback_policy: input.playback_policy || ['public'],
+        inputs: [{ url: input.input }],
+        playback_policies: input.playback_policy || ['public'],
         mp4_support: 'standard',
       })
     );
@@ -58,7 +66,10 @@ export const muxVideo = {
   },
 
   // Playback IDs
-  async createPlaybackId(assetId: string, policy: 'public' | 'signed' = 'public') {
+  async createPlaybackId(
+    assetId: string,
+    policy: 'public' | 'signed' = 'public'
+  ) {
     return withRateLimit(() =>
       mux.video.assets.createPlaybackId(assetId, { policy })
     );
@@ -71,13 +82,7 @@ export const muxVideo = {
   },
 
   // Direct uploads
-  async createDirectUpload(params: {
-    cors_origin?: string;
-    new_asset_settings?: {
-      playback_policy?: string[];
-      mp4_support?: string;
-    };
-  }) {
+  async createDirectUpload(params: Mux.Video.UploadCreateParams) {
     return withRateLimit(() => mux.video.uploads.create(params));
   },
 
@@ -107,22 +112,16 @@ export const muxData = {
   },
 
   // Metrics
-  async getMetrics(metricId: string, params?: {
-    timeframe?: string[];
-    filters?: string[];
-    measurement?: string;
-    order_direction?: 'asc' | 'desc';
-    group_by?: string;
-  }) {
-    return withRateLimit(() => mux.data.metrics.get(metricId, params));
+  async getMetrics(metricId: string, params?: Record<string, unknown>) {
+    // @ts-expect-error - Mux SDK has strict metric ID types, but we need flexibility
+    return withRateLimit(() =>
+      mux.data.metrics.getOverallValues(metricId, params)
+    );
   },
 
   // Real-time metrics
-  async getRealTimeMetrics(params?: {
-    filters?: string[];
-    timestamp?: number;
-  }) {
-    return withRateLimit(() => mux.data.realTime.get(params));
+  async getRealTimeMetrics() {
+    return withRateLimit(() => mux.data.realTime.listMetrics());
   },
 };
 
@@ -133,7 +132,12 @@ export function verifyWebhookSignature(
   secret: string
 ): boolean {
   try {
-    return Mux.webhooks.verifyHeader(rawBody, signature, secret);
+    mux.webhooks.verifySignature(
+      rawBody,
+      { 'mux-signature': signature },
+      secret
+    );
+    return true;
   } catch (error) {
     console.error('Webhook verification failed:', error);
     return false;
@@ -155,7 +159,7 @@ export function getThumbnailUrl(
   }
 ): string {
   const params = new URLSearchParams();
-  
+
   if (options?.width) params.set('width', options.width.toString());
   if (options?.height) params.set('height', options.height.toString());
   if (options?.fit_mode) params.set('fit_mode', options.fit_mode);

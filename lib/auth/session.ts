@@ -19,7 +19,9 @@ if (!process.env.SESSION_SECRET) {
 }
 
 export async function getSession() {
-  const session = await getIronSession<SessionData>(await cookies(), {
+  const cookieStore = await cookies();
+  // @ts-expect-error - Next.js 15 type compatibility issue with iron-session
+  const session = await getIronSession<SessionData>(cookieStore, {
     password: process.env.SESSION_SECRET!,
     cookieName: 'mux-control-panel-session',
     cookieOptions: {
@@ -54,10 +56,10 @@ export async function destroySession() {
 
 export async function requireAuth() {
   const session = await getSession();
-  
+
   if (!session.isLoggedIn) {
     redirect('/login');
   }
-  
+
   return session;
 }

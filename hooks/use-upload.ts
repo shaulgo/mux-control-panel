@@ -1,13 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UploadResult } from '@/lib/mux/types';
 import type { UploadUrlsInput } from '@/lib/validations/upload';
-import type { MuxAsset } from '@/lib/mux/types';
-
-interface UploadResult {
-  url: string;
-  success: boolean;
-  asset?: MuxAsset;
-  error?: string;
-}
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface UploadResponse {
   results: UploadResult[];

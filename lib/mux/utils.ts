@@ -1,5 +1,5 @@
-import { muxVideo, muxData } from './client';
-import type { MuxAsset, DirectUpload, VideoView } from './types';
+import { muxData, muxVideo, type MuxAsset } from './client';
+import type { DirectUpload } from './types';
 
 // Asset utilities
 export async function createAssetFromUrl(url: string): Promise<MuxAsset> {
@@ -7,7 +7,7 @@ export async function createAssetFromUrl(url: string): Promise<MuxAsset> {
     input: url,
     playback_policy: ['public'],
   });
-  return response.data;
+  return response;
 }
 
 export async function waitForAssetReady(
@@ -16,22 +16,25 @@ export async function waitForAssetReady(
   intervalMs: number = 3000
 ): Promise<MuxAsset> {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const response = await muxVideo.getAsset(assetId);
-    const asset = response.data;
+    const asset = await muxVideo.getAsset(assetId);
 
     if (asset.status === 'ready') {
       return asset;
     }
 
     if (asset.status === 'errored') {
-      throw new Error(`Asset ${assetId} failed to process: ${asset.errors?.messages?.join(', ')}`);
+      throw new Error(
+        `Asset ${assetId} failed to process: ${asset.errors?.messages?.join(', ')}`
+      );
     }
 
     // Wait before next attempt
     await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
 
-  throw new Error(`Asset ${assetId} did not become ready within ${maxAttempts} attempts`);
+  throw new Error(
+    `Asset ${assetId} did not become ready within ${maxAttempts} attempts`
+  );
 }
 
 export async function getAssetWithRetry(
@@ -40,35 +43,44 @@ export async function getAssetWithRetry(
 ): Promise<MuxAsset | null> {
   for (let retry = 0; retry <= maxRetries; retry++) {
     try {
-      const response = await muxVideo.getAsset(assetId);
-      return response.data;
-    } catch (error: any) {
-      if (error.status === 404) {
+      const asset = await muxVideo.getAsset(assetId);
+      return asset;
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'status' in error &&
+        error.status === 404
+      ) {
         return null;
       }
-      
+
       if (retry === maxRetries) {
         throw error;
       }
-      
+
       // Wait before retry
       await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
     }
   }
-  
+
   return null;
 }
 
 // Direct upload utilities
-export async function createDirectUploadUrl(corsOrigin?: string): Promise<DirectUpload> {
-  const response = await muxVideo.createDirectUpload({
-    cors_origin: corsOrigin,
+export async function createDirectUploadUrl(
+  corsOrigin?: string
+): Promise<DirectUpload> {
+  const params = {
+    cors_origin: corsOrigin || '',
     new_asset_settings: {
-      playbook_policy: ['public'],
-      mp4_support: 'standard',
+      playback_policies: ['public' as const],
+      mp4_support: 'standard' as const,
     },
-  });
-  return response.data;
+  };
+
+  const upload = await muxVideo.createDirectUpload(params);
+  return upload;
 }
 
 export async function pollDirectUploadStatus(
@@ -78,8 +90,7 @@ export async function pollDirectUploadStatus(
   intervalMs: number = 2000
 ): Promise<DirectUpload> {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const response = await muxVideo.getDirectUpload(uploadId);
-    const upload = response.data;
+    const upload = await muxVideo.getDirectUpload(uploadId);
 
     onStatusChange?.(upload);
 
@@ -87,22 +98,30 @@ export async function pollDirectUploadStatus(
       return upload;
     }
 
-    if (upload.status === 'errored' || upload.status === 'cancelled' || upload.status === 'timed_out') {
-      throw new Error(`Upload ${uploadId} failed with status: ${upload.status}`);
+    if (
+      upload.status === 'errored' ||
+      upload.status === 'cancelled' ||
+      upload.status === 'timed_out'
+    ) {
+      throw new Error(
+        `Upload ${uploadId} failed with status: ${upload.status}`
+      );
     }
 
     // Wait before next attempt
     await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
 
-  throw new Error(`Upload ${uploadId} did not complete within ${maxAttempts} attempts`);
+  throw new Error(
+    `Upload ${uploadId} did not complete within ${maxAttempts} attempts`
+  );
 }
 
 // Analytics utilities
 export async function getAssetViews(
   assetId: string,
   timeframe: string[] = ['7:days']
-): Promise<VideoView[]> {
+): Promise<unknown[]> {
   const response = await muxData.getVideoViews({
     filters: [`asset_id:${assetId}`],
     timeframe,
@@ -117,8 +136,13 @@ export async function getTotalViews(
     timeframe,
     measurement: 'count',
   });
-  
-  return response.data.reduce((total: number, view: any) => total + (view.value || 0), 0);
+
+  return response.data.reduce((total: number, view: unknown) => {
+    if (view && typeof view === 'object' && 'value' in view) {
+      return total + (Number(view.value) || 0);
+    }
+    return total;
+  }, 0);
 }
 
 export async function getViewsByCountry(
@@ -130,10 +154,14 @@ export async function getViewsByCountry(
     measurement: 'count',
   });
 
-  return response.data.map((item: any) => ({
-    country: item.country || 'Unknown',
-    views: item.value || 0,
-  }));
+  return response.data.map((item: unknown) => {
+    if (item && typeof item === 'object') {
+      const country = 'country' in item ? String(item.country) : 'Unknown';
+      const views = 'value' in item ? Number(item.value) || 0 : 0;
+      return { country, views };
+    }
+    return { country: 'Unknown', views: 0 };
+  });
 }
 
 // Utility functions
@@ -145,7 +173,7 @@ export function formatDuration(seconds: number): string {
   if (hours > 0) {
     return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
-  
+
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 

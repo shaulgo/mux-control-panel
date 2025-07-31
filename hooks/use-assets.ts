@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { MuxAsset } from '@/lib/mux/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface AssetsResponse {
   data: MuxAsset[];
@@ -85,9 +85,10 @@ export function useAssetPolling(assetId: string, enabled: boolean = true) {
       return response.json();
     },
     enabled: enabled && !!assetId,
-    refetchInterval: (data) => {
+    refetchInterval: queryData => {
       // Stop polling if asset is ready or errored
-      if (data?.data?.status === 'ready' || data?.data?.status === 'errored') {
+      const asset = (queryData as { data: MuxAsset } | undefined)?.data;
+      if (asset?.status === 'ready' || asset?.status === 'errored') {
         return false;
       }
       return 3000; // Poll every 3 seconds

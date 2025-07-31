@@ -14,11 +14,9 @@ import { Input } from '@/components/ui/input';
 import { useAssets, useDeleteAsset } from '@/hooks/use-assets';
 import type { MuxAsset } from '@/lib/mux/types';
 import { Grid, List, Search, Upload } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function AssetsPage() {
-  const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<MuxAsset | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -45,16 +43,16 @@ export default function AssetsPage() {
   const assets = assetsData?.data || [];
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="space-y-8">
       {/* Enhanced Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="text-gradient text-4xl font-bold">Assets</h1>
+          <h1 className="text-4xl font-bold text-blue-600">Assets</h1>
           <p className="text-muted-foreground text-lg">
             Manage your video assets and view their details
           </p>
         </div>
-        <Button className="btn-gradient shadow-lg transition-all duration-300 hover:shadow-xl">
+        <Button className="bg-blue-500 text-white shadow-lg transition-all duration-300 hover:bg-blue-600 hover:shadow-xl">
           <Upload className="mr-2 h-4 w-4" />
           Upload Asset
         </Button>
@@ -62,13 +60,13 @@ export default function AssetsPage() {
 
       {/* Enhanced Stats Cards */}
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="stats-card animate-slide-up">
+        <Card className="border border-gray-200/60 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-blue-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
               Total Assets
             </CardTitle>
-            <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/20">
-              <Upload className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <div className="rounded-lg bg-blue-100 p-2">
+              <Upload className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -82,16 +80,13 @@ export default function AssetsPage() {
           </CardContent>
         </Card>
 
-        <Card
-          className="stats-card animate-slide-up"
-          style={{ animationDelay: '0.1s' }}
-        >
+        <Card className="border border-gray-200/60 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-green-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
               Ready Assets
             </CardTitle>
-            <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/20">
-              <Grid className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div className="rounded-lg bg-green-100 p-2">
+              <Grid className="h-4 w-4 text-green-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -105,16 +100,13 @@ export default function AssetsPage() {
           </CardContent>
         </Card>
 
-        <Card
-          className="stats-card animate-slide-up"
-          style={{ animationDelay: '0.2s' }}
-        >
+        <Card className="border border-gray-200/60 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-orange-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
               Processing
             </CardTitle>
-            <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/20">
-              <Search className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <div className="rounded-lg bg-orange-100 p-2">
+              <Search className="h-4 w-4 text-orange-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -138,7 +130,7 @@ export default function AssetsPage() {
               placeholder="Search assets..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-80 pl-10"
+              className="w-80 border-gray-200/60 bg-white/80 pl-10 backdrop-blur-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           </div>
         </div>
@@ -148,6 +140,11 @@ export default function AssetsPage() {
             variant={viewMode === 'table' ? 'default' : 'outline'}
             size="icon"
             onClick={() => setViewMode('table')}
+            className={
+              viewMode === 'table'
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'border-gray-200/60 hover:bg-gray-50'
+            }
           >
             <List className="h-4 w-4" />
           </Button>
@@ -155,6 +152,11 @@ export default function AssetsPage() {
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="icon"
             onClick={() => setViewMode('grid')}
+            className={
+              viewMode === 'grid'
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'border-gray-200/60 hover:bg-gray-50'
+            }
           >
             <Grid className="h-4 w-4" />
           </Button>
@@ -162,9 +164,9 @@ export default function AssetsPage() {
       </div>
 
       {/* Assets List */}
-      <Card>
+      <Card className="border border-gray-200/60 bg-white/80 shadow-sm backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Assets</CardTitle>
+          <CardTitle className="text-xl font-semibold">Assets</CardTitle>
           <CardDescription>
             {assets.length} asset{assets.length !== 1 ? 's' : ''} found
           </CardDescription>

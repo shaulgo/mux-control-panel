@@ -6,7 +6,7 @@ import { Menu } from 'lucide-react';
 
 interface HeaderProps {
   onMenuClick?: () => void;
-  title?: string;
+  title?: string | undefined;
 }
 
 export function Header({ onMenuClick, title }: HeaderProps) {
