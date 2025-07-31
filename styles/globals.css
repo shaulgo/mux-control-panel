@@ -2,122 +2,128 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    /* Modern SaaS Design System - Light Theme (HSL components) */
+/* CSS variables defined outside of @layer to ensure availability regardless of layer order */
+:root {
+  /* Enable consistent form control rendering */
+  color-scheme: light;
 
-    /* Gray Scale (converted to H S% L%) */
-    --gray-50: 240 5% 98%; /* #fafafa */
-    --gray-100: 240 6% 96%; /* #f4f4f5 */
-    --gray-200: 240 6% 89%; /* #e4e4e7 */
-    --gray-300: 240 5% 83%; /* #d4d4d8 */
-    --gray-400: 240 5% 65%; /* #a1a1aa */
-    --gray-500: 240 5% 46%; /* #71717a */
-    --gray-600: 240 6% 34%; /* #52525b */
-    --gray-700: 240 6% 26%; /* #3f3f46 */
-    --gray-800: 240 6% 16%; /* #27272a */
-    --gray-900: 240 6% 10%; /* #18181b */
+  /* Modern SaaS Design System - Light Theme (HSL components) */
 
-    /* Accent Color - Modern Blue (#3B82F6) and scale (approximate) */
-    --accent-50: 217 100% 97%; /* #eff6ff */
-    --accent-100: 214 95% 93%; /* #dbeafe */
-    --accent-200: 213 97% 85%; /* #bfdbfe */
-    --accent-300: 212 95% 74%; /* #93c5fd */
-    --accent-400: 213 94% 68%; /* #60a5fa */
-    --accent-500: 217 91% 60%; /* #3b82f6 - Primary accent */
-    --accent-600: 221 83% 53%; /* #2563eb */
-    --accent-700: 224 76% 48%; /* #1d4ed8 */
-    --accent-800: 226 72% 40%; /* #1e40af */
-    --accent-900: 234 57% 28%; /* #1e3a8a */
+  /* Gray Scale (converted to H S% L%) */
+  --gray-50: 240 5% 98%; /* #fafafa */
+  --gray-100: 240 6% 96%; /* #f4f4f5 */
+  --gray-200: 240 6% 89%; /* #e4e4e7 */
+  --gray-300: 240 5% 83%; /* #d4d4d8 */
+  --gray-400: 240 5% 65%; /* #a1a1aa */
+  --gray-500: 240 5% 46%; /* #71717a */
+  --gray-600: 240 6% 34%; /* #52525b */
+  --gray-700: 240 6% 26%; /* #3f3f46 */
+  --gray-800: 240 6% 16%; /* #27272a */
+  --gray-900: 240 6% 10%; /* #18181b */
 
-    /* Semantic Colors (greens, reds, ambers) */
-    --success-50: 137 64% 96%; /* #f0fdf4 */
-    --success-500: 142 70% 45%; /* #22c55e */
-    --success-600: 142 72% 36%; /* #16a34a */
-    --success-foreground: 0 0% 100%; /* white */
+  /* Accent Color - Modern Blue (#3B82F6) and scale (approximate) */
+  --accent-50: 217 100% 97%; /* #eff6ff */
+  --accent-100: 214 95% 93%; /* #dbeafe */
+  --accent-200: 213 97% 85%; /* #bfdbfe */
+  --accent-300: 212 95% 74%; /* #93c5fd */
+  --accent-400: 213 94% 68%; /* #60a5fa */
+  --accent-500: 217 91% 60%; /* #3b82f6 - Primary accent */
+  --accent-600: 221 83% 53%; /* #2563eb */
+  --accent-700: 224 76% 48%; /* #1d4ed8 */
+  --accent-800: 226 72% 40%; /* #1e40af */
+  --accent-900: 234 57% 28%; /* #1e3a8a */
 
-    --error-50: 0 86% 97%; /* #fef2f2 */
-    --error-500: 0 84% 60%; /* #ef4444 */
-    --error-600: 0 72% 51%; /* #dc2626 */
-    --error-foreground: 0 0% 100%; /* white */
+  /* Semantic Colors (greens, reds, ambers) */
+  --success-50: 137 64% 96%; /* #f0fdf4 */
+  --success-500: 142 70% 45%; /* #22c55e */
+  --success-600: 142 72% 36%; /* #16a34a */
+  --success-foreground: 0 0% 100%; /* white */
 
-    --warning-50: 48 100% 96%; /* #fffbeb */
-    --warning-500: 38 92% 50%; /* #f59e0b */
-    --warning-600: 35 90% 44%; /* #d97706 */
-    --warning-foreground: 0 0% 100%; /* white */
+  --error-50: 0 86% 97%; /* #fef2f2 */
+  --error-500: 0 84% 60%; /* #ef4444 */
+  --error-600: 0 72% 51%; /* #dc2626 */
+  --error-foreground: 0 0% 100%; /* white */
 
-    /* Core System Colors (HSL tokens) */
-    --background: 0 0% 100%; /* white */
-    --foreground: var(--gray-900);
-    --card: 0 0% 100%;
-    --card-foreground: var(--gray-900);
-    --popover: 0 0% 100%;
-    --popover-foreground: var(--gray-900);
+  --warning-50: 48 100% 96%; /* #fffbeb */
+  --warning-500: 38 92% 50%; /* #f59e0b */
+  --warning-600: 35 90% 44%; /* #d97706 */
+  --warning-foreground: 0 0% 100%; /* white */
 
-    --primary: var(--accent-500);
-    --primary-foreground: 0 0% 100%; /* white */
-    --secondary: var(--gray-100);
-    --secondary-foreground: var(--gray-900);
+  /* Core System Colors (HSL tokens) */
+  --background: 0 0% 100%; /* white */
+  --foreground: var(--gray-900);
+  --card: 0 0% 100%;
+  --card-foreground: var(--gray-900);
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--gray-900);
 
-    --muted: var(--gray-100);
-    --muted-foreground: var(--gray-500);
-    --accent-foreground: var(--gray-900);
+  --primary: var(--accent-500);
+  --primary-foreground: 0 0% 100%; /* white */
+  --secondary: var(--gray-100);
+  --secondary-foreground: var(--gray-900);
 
-    --border: var(--gray-200);
-    --input: var(--gray-200);
-    --ring: var(--accent-500);
+  --muted: var(--gray-100);
+  --muted-foreground: var(--gray-500);
+  --accent-foreground: var(--gray-900);
 
-    --radius: 8px; /* md radius as default */
-  }
+  --border: var(--gray-200);
+  --input: var(--gray-200);
+  --ring: var(--accent-500);
 
-  .dark {
-    /* Modern SaaS Design System - Dark Theme (HSL components) */
+  --radius: 8px; /* md radius as default */
+}
 
-    /* Gray Scale (inverted for dark mode) */
-    --gray-50: 240 6% 10%; /* #18181b */
-    --gray-100: 240 6% 16%; /* #27272a */
-    --gray-200: 240 6% 26%; /* #3f3f46 */
-    --gray-300: 240 6% 34%; /* #52525b */
-    --gray-400: 240 5% 46%; /* #71717a */
-    --gray-500: 240 5% 65%; /* #a1a1aa */
-    --gray-600: 240 5% 83%; /* #d4d4d8 */
-    --gray-700: 240 6% 89%; /* #e4e4e7 */
-    --gray-800: 240 6% 96%; /* #f4f4f5 */
-    --gray-900: 240 5% 98%; /* #fafafa */
+.dark {
+  /* In dark mode ensure UA widgets render in dark where supported */
+  color-scheme: dark;
 
-    /* Accent Color - Modern Blue (lightened scale for dark mode) */
-    --accent-50: 234 57% 28%; /* #1e3a8a */
-    --accent-100: 226 72% 40%; /* #1e40af */
-    --accent-200: 224 76% 48%; /* #1d4ed8 */
-    --accent-300: 221 83% 53%; /* #2563eb */
-    --accent-400: 217 91% 60%; /* #3b82f6 */
-    --accent-500: 213 94% 68%; /* #60a5fa - Primary accent for dark mode */
-    --accent-600: 212 95% 74%; /* #93c5fd */
-    --accent-700: 213 97% 85%; /* #bfdbfe */
-    --accent-800: 214 95% 93%; /* #dbeafe */
-    --accent-900: 217 100% 97%; /* #eff6ff */
+  /* Modern SaaS Design System - Dark Theme (HSL components) */
 
-    /* Core System Colors */
-    --background: var(--gray-50);
-    --foreground: var(--gray-900);
-    --card: var(--gray-100);
-    --card-foreground: var(--gray-900);
-    --popover: var(--gray-100);
-    --popover-foreground: var(--gray-900);
+  /* Gray Scale (inverted for dark mode) */
+  --gray-50: 240 6% 10%; /* #18181b */
+  --gray-100: 240 6% 16%; /* #27272a */
+  --gray-200: 240 6% 26%; /* #3f3f46 */
+  --gray-300: 240 6% 34%; /* #52525b */
+  --gray-400: 240 5% 46%; /* #71717a */
+  --gray-500: 240 5% 65%; /* #a1a1aa */
+  --gray-600: 240 5% 83%; /* #d4d4d8 */
+  --gray-700: 240 6% 89%; /* #e4e4e7 */
+  --gray-800: 240 6% 96%; /* #f4f4f5 */
+  --gray-900: 240 5% 98%; /* #fafafa */
 
-    --primary: var(--accent-500);
-    --primary-foreground: var(--gray-50);
-    --secondary: var(--gray-200);
-    --secondary-foreground: var(--gray-900);
+  /* Accent Color - Modern Blue (lightened scale for dark mode) */
+  --accent-50: 234 57% 28%; /* #1e3a8a */
+  --accent-100: 226 72% 40%; /* #1e40af */
+  --accent-200: 224 76% 48%; /* #1d4ed8 */
+  --accent-300: 221 83% 53%; /* #2563eb */
+  --accent-400: 217 91% 60%; /* #3b82f6 */
+  --accent-500: 213 94% 68%; /* #60a5fa - Primary accent for dark mode */
+  --accent-600: 212 95% 74%; /* #93c5fd */
+  --accent-700: 213 97% 85%; /* #bfdbfe */
+  --accent-800: 214 95% 93%; /* #dbeafe */
+  --accent-900: 217 100% 97%; /* #eff6ff */
 
-    --muted: var(--gray-200);
-    --muted-foreground: var(--gray-500);
-    --accent-foreground: var(--gray-900);
+  /* Core System Colors */
+  --background: var(--gray-50);
+  --foreground: var(--gray-900);
+  --card: var(--gray-100);
+  --card-foreground: var(--gray-900);
+  --popover: var(--gray-100);
+  --popover-foreground: var(--gray-900);
 
-    --border: var(--gray-200);
-    --input: var(--gray-200);
-    --ring: var(--accent-500);
-  }
+  --primary: var(--accent-500);
+  --primary-foreground: var(--gray-50);
+  --secondary: var(--gray-200);
+  --secondary-foreground: var(--gray-900);
+
+  --muted: var(--gray-200);
+  --muted-foreground: var(--gray-500);
+  --accent-foreground: var(--gray-900);
+
+  --border: var(--gray-200);
+  --input: var(--gray-200);
+  --ring: var(--accent-500);
+  /* End variables */
 }
 
 @layer base {
@@ -640,7 +646,7 @@
 
 /* Modern Component Enhancements */
 .card-modern {
-  @apply border border-gray-200/60 bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md;
+  @apply border border-[#e5e7eb99] bg-[#ffffffcc] shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md;
 }
 
 .card-modern-hover {
@@ -652,5 +658,5 @@
 }
 
 .input-modern {
-  @apply focus:border-accent-500 focus:ring-accent-500/20 border-gray-200/60 bg-white/80 backdrop-blur-sm;
+  @apply focus:border-accent-500 border-[#e5e7eb99] bg-[#ffffffcc] backdrop-blur-sm focus:ring-[#3b82f633];
 }

@@ -119,13 +119,13 @@ export function ModernSidebar({
   return (
     <div
       className={cn(
-        'flex h-full flex-col border-r border-gray-200/60 bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 ease-out',
+        'flex h-full flex-col border-r border-[#e5e7eb99] bg-[#ffffffcc] shadow-sm backdrop-blur-sm transition-all duration-300 ease-out',
         sidebarWidth,
         className
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-gray-200/60 px-4">
+      <div className="flex h-16 items-center justify-between border-b border-[#e5e7eb99] px-4">
         {!isCollapsed && (
           <Link href="/dashboard" className="group flex items-center space-x-3">
             <div className="from-accent-500 to-accent-600 rounded-lg bg-gradient-to-br p-2 shadow-sm">
@@ -211,7 +211,7 @@ export function ModernSidebar({
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-200/60 p-4">
+      <div className="border-t border-[#e5e7eb99] p-4">
         <Button
           variant="ghost"
           onClick={handleLogout}

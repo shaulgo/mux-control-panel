@@ -22,7 +22,7 @@
     "db:studio": "prisma studio",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {
     "@mux/mux-node": "^12.3.0",

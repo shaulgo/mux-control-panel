@@ -120,6 +120,7 @@ export function LoginForm() {
               size="lg"
               className="w-full shadow-lg transition-all duration-300 hover:shadow-xl"
               disabled={isLoading}
+              data-testid="login-submit"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? 'Signing in...' : 'Sign in'}

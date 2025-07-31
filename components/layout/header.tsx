@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick, title }: HeaderProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200/60 bg-white/80 px-6 shadow-sm backdrop-blur-sm">
+    <header className="flex h-16 items-center justify-between border-b border-[#e5e7eb99] bg-[#ffffffcc] px-6 shadow-sm backdrop-blur-sm">
       <div className="flex items-center space-x-4">
         <Button
           variant="ghost"

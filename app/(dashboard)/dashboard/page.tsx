@@ -60,7 +60,7 @@ export default function AssetsPage() {
 
       {/* Enhanced Stats Cards */}
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border border-gray-200/60 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-blue-200 hover:shadow-md">
+        <Card className="border border-[#e5e7eb99] bg-[#fffffff2] shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-blue-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
               Total Assets
@@ -80,7 +80,7 @@ export default function AssetsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-200/60 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-green-200 hover:shadow-md">
+        <Card className="border border-[#e5e7eb99] bg-[#fffffff2] shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-green-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
               Ready Assets
@@ -100,7 +100,7 @@ export default function AssetsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-gray-200/60 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-orange-200 hover:shadow-md">
+        <Card className="border border-[#e5e7eb99] bg-[#fffffff2] shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-orange-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
               Processing
@@ -130,7 +130,7 @@ export default function AssetsPage() {
               placeholder="Search assets..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-80 border-gray-200/60 bg-white/80 pl-10 backdrop-blur-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="w-80 border-[#e5e7eb99] bg-[#ffffffcc] pl-10 backdrop-blur-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function AssetsPage() {
             className={
               viewMode === 'table'
                 ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'border-gray-200/60 hover:bg-gray-50'
+                : 'border-[#e5e7eb99] hover:bg-gray-50'
             }
           >
             <List className="h-4 w-4" />
@@ -155,7 +155,7 @@ export default function AssetsPage() {
             className={
               viewMode === 'grid'
                 ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'border-gray-200/60 hover:bg-gray-50'
+                : 'border-[#e5e7eb99] hover:bg-gray-50'
             }
           >
             <Grid className="h-4 w-4" />
@@ -164,7 +164,7 @@ export default function AssetsPage() {
       </div>
 
       {/* Assets List */}
-      <Card className="border border-gray-200/60 bg-white/80 shadow-sm backdrop-blur-sm">
+      <Card className="border border-[#e5e7eb99] bg-[#ffffffcc] shadow-sm backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Assets</CardTitle>
           <CardDescription>
