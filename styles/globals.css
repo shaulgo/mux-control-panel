@@ -4,119 +4,119 @@
 
 @layer base {
   :root {
-    /* Modern SaaS Design System - Light Theme */
+    /* Modern SaaS Design System - Light Theme (HSL components) */
 
-    /* Gray Scale */
-    --gray-50: 250 250 250; /* #fafafa */
-    --gray-100: 244 244 245; /* #f4f4f5 */
-    --gray-200: 228 228 231; /* #e4e4e7 */
-    --gray-300: 212 212 216; /* #d4d4d8 */
-    --gray-400: 161 161 170; /* #a1a1aa */
-    --gray-500: 113 113 122; /* #71717a */
-    --gray-600: 82 82 91; /* #52525b */
-    --gray-700: 63 63 70; /* #3f3f46 */
-    --gray-800: 39 39 42; /* #27272a */
-    --gray-900: 24 24 27; /* #18181b */
+    /* Gray Scale (converted to H S% L%) */
+    --gray-50: 240 5% 98%; /* #fafafa */
+    --gray-100: 240 6% 96%; /* #f4f4f5 */
+    --gray-200: 240 6% 89%; /* #e4e4e7 */
+    --gray-300: 240 5% 83%; /* #d4d4d8 */
+    --gray-400: 240 5% 65%; /* #a1a1aa */
+    --gray-500: 240 5% 46%; /* #71717a */
+    --gray-600: 240 6% 34%; /* #52525b */
+    --gray-700: 240 6% 26%; /* #3f3f46 */
+    --gray-800: 240 6% 16%; /* #27272a */
+    --gray-900: 240 6% 10%; /* #18181b */
 
-    /* Accent Color - Modern Blue (#3B82F6) */
-    --accent-50: 239 246 255; /* #eff6ff */
-    --accent-100: 219 234 254; /* #dbeafe */
-    --accent-200: 191 219 254; /* #bfdbfe */
-    --accent-300: 147 197 253; /* #93c5fd */
-    --accent-400: 96 165 250; /* #60a5fa */
-    --accent-500: 59 130 246; /* #3b82f6 - Primary accent */
-    --accent-600: 37 99 235; /* #2563eb */
-    --accent-700: 29 78 216; /* #1d4ed8 */
-    --accent-800: 30 64 175; /* #1e40af */
-    --accent-900: 30 58 138; /* #1e3a8a */
+    /* Accent Color - Modern Blue (#3B82F6) and scale (approximate) */
+    --accent-50: 217 100% 97%; /* #eff6ff */
+    --accent-100: 214 95% 93%; /* #dbeafe */
+    --accent-200: 213 97% 85%; /* #bfdbfe */
+    --accent-300: 212 95% 74%; /* #93c5fd */
+    --accent-400: 213 94% 68%; /* #60a5fa */
+    --accent-500: 217 91% 60%; /* #3b82f6 - Primary accent */
+    --accent-600: 221 83% 53%; /* #2563eb */
+    --accent-700: 224 76% 48%; /* #1d4ed8 */
+    --accent-800: 226 72% 40%; /* #1e40af */
+    --accent-900: 234 57% 28%; /* #1e3a8a */
 
-    /* Semantic Colors */
-    --success-50: 240 253 244; /* #f0fdf4 */
-    --success-500: 34 197 94; /* #22c55e */
-    --success-600: 22 163 74; /* #16a34a */
-    --success-foreground: 255 255 255; /* white */
+    /* Semantic Colors (greens, reds, ambers) */
+    --success-50: 137 64% 96%; /* #f0fdf4 */
+    --success-500: 142 70% 45%; /* #22c55e */
+    --success-600: 142 72% 36%; /* #16a34a */
+    --success-foreground: 0 0% 100%; /* white */
 
-    --error-50: 254 242 242; /* #fef2f2 */
-    --error-500: 239 68 68; /* #ef4444 */
-    --error-600: 220 38 38; /* #dc2626 */
-    --error-foreground: 255 255 255; /* white */
+    --error-50: 0 86% 97%; /* #fef2f2 */
+    --error-500: 0 84% 60%; /* #ef4444 */
+    --error-600: 0 72% 51%; /* #dc2626 */
+    --error-foreground: 0 0% 100%; /* white */
 
-    --warning-50: 255 251 235; /* #fffbeb */
-    --warning-500: 245 158 11; /* #f59e0b */
-    --warning-600: 217 119 6; /* #d97706 */
-    --warning-foreground: 255 255 255; /* white */
+    --warning-50: 48 100% 96%; /* #fffbeb */
+    --warning-500: 38 92% 50%; /* #f59e0b */
+    --warning-600: 35 90% 44%; /* #d97706 */
+    --warning-foreground: 0 0% 100%; /* white */
 
-    /* Core System Colors */
-    --background: 255 255 255; /* white */
-    --foreground: var(--gray-900); /* #18181b */
-    --card: 255 255 255; /* white */
-    --card-foreground: var(--gray-900); /* #18181b */
-    --popover: 255 255 255; /* white */
-    --popover-foreground: var(--gray-900); /* #18181b */
+    /* Core System Colors (HSL tokens) */
+    --background: 0 0% 100%; /* white */
+    --foreground: var(--gray-900);
+    --card: 0 0% 100%;
+    --card-foreground: var(--gray-900);
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--gray-900);
 
-    --primary: var(--accent-500); /* #6B4EFF */
-    --primary-foreground: 255 255 255; /* white */
-    --secondary: var(--gray-100); /* #f4f4f5 */
-    --secondary-foreground: var(--gray-900); /* #18181b */
+    --primary: var(--accent-500);
+    --primary-foreground: 0 0% 100%; /* white */
+    --secondary: var(--gray-100);
+    --secondary-foreground: var(--gray-900);
 
-    --muted: var(--gray-100); /* #f4f4f5 */
-    --muted-foreground: var(--gray-500); /* #71717a */
-    --accent-foreground: var(--gray-900); /* #18181b */
+    --muted: var(--gray-100);
+    --muted-foreground: var(--gray-500);
+    --accent-foreground: var(--gray-900);
 
-    --border: var(--gray-200); /* #e4e4e7 */
-    --input: var(--gray-200); /* #e4e4e7 */
-    --ring: var(--accent-500); /* #6B4EFF */
+    --border: var(--gray-200);
+    --input: var(--gray-200);
+    --ring: var(--accent-500);
 
     --radius: 8px; /* md radius as default */
   }
 
   .dark {
-    /* Modern SaaS Design System - Dark Theme */
+    /* Modern SaaS Design System - Dark Theme (HSL components) */
 
     /* Gray Scale (inverted for dark mode) */
-    --gray-50: 24 24 27; /* #18181b */
-    --gray-100: 39 39 42; /* #27272a */
-    --gray-200: 63 63 70; /* #3f3f46 */
-    --gray-300: 82 82 91; /* #52525b */
-    --gray-400: 113 113 122; /* #71717a */
-    --gray-500: 161 161 170; /* #a1a1aa */
-    --gray-600: 212 212 216; /* #d4d4d8 */
-    --gray-700: 228 228 231; /* #e4e4e7 */
-    --gray-800: 244 244 245; /* #f4f4f5 */
-    --gray-900: 250 250 250; /* #fafafa */
+    --gray-50: 240 6% 10%; /* #18181b */
+    --gray-100: 240 6% 16%; /* #27272a */
+    --gray-200: 240 6% 26%; /* #3f3f46 */
+    --gray-300: 240 6% 34%; /* #52525b */
+    --gray-400: 240 5% 46%; /* #71717a */
+    --gray-500: 240 5% 65%; /* #a1a1aa */
+    --gray-600: 240 5% 83%; /* #d4d4d8 */
+    --gray-700: 240 6% 89%; /* #e4e4e7 */
+    --gray-800: 240 6% 96%; /* #f4f4f5 */
+    --gray-900: 240 5% 98%; /* #fafafa */
 
-    /* Accent Color - Modern Blue (adjusted for dark mode) */
-    --accent-50: 30 58 138; /* #1e3a8a */
-    --accent-100: 30 64 175; /* #1e40af */
-    --accent-200: 29 78 216; /* #1d4ed8 */
-    --accent-300: 37 99 235; /* #2563eb */
-    --accent-400: 59 130 246; /* #3b82f6 */
-    --accent-500: 96 165 250; /* #60a5fa - Primary accent for dark mode */
-    --accent-600: 147 197 253; /* #93c5fd */
-    --accent-700: 191 219 254; /* #bfdbfe */
-    --accent-800: 219 234 254; /* #dbeafe */
-    --accent-900: 239 246 255; /* #eff6ff */
+    /* Accent Color - Modern Blue (lightened scale for dark mode) */
+    --accent-50: 234 57% 28%; /* #1e3a8a */
+    --accent-100: 226 72% 40%; /* #1e40af */
+    --accent-200: 224 76% 48%; /* #1d4ed8 */
+    --accent-300: 221 83% 53%; /* #2563eb */
+    --accent-400: 217 91% 60%; /* #3b82f6 */
+    --accent-500: 213 94% 68%; /* #60a5fa - Primary accent for dark mode */
+    --accent-600: 212 95% 74%; /* #93c5fd */
+    --accent-700: 213 97% 85%; /* #bfdbfe */
+    --accent-800: 214 95% 93%; /* #dbeafe */
+    --accent-900: 217 100% 97%; /* #eff6ff */
 
     /* Core System Colors */
-    --background: var(--gray-50); /* #18181b */
-    --foreground: var(--gray-900); /* #fafafa */
-    --card: var(--gray-100); /* #27272a */
-    --card-foreground: var(--gray-900); /* #fafafa */
-    --popover: var(--gray-100); /* #27272a */
-    --popover-foreground: var(--gray-900); /* #fafafa */
+    --background: var(--gray-50);
+    --foreground: var(--gray-900);
+    --card: var(--gray-100);
+    --card-foreground: var(--gray-900);
+    --popover: var(--gray-100);
+    --popover-foreground: var(--gray-900);
 
-    --primary: var(--accent-500); /* #6B4EFF */
-    --primary-foreground: var(--gray-50); /* #18181b */
-    --secondary: var(--gray-200); /* #3f3f46 */
-    --secondary-foreground: var(--gray-900); /* #fafafa */
+    --primary: var(--accent-500);
+    --primary-foreground: var(--gray-50);
+    --secondary: var(--gray-200);
+    --secondary-foreground: var(--gray-900);
 
-    --muted: var(--gray-200); /* #3f3f46 */
-    --muted-foreground: var(--gray-500); /* #a1a1aa */
-    --accent-foreground: var(--gray-900); /* #fafafa */
+    --muted: var(--gray-200);
+    --muted-foreground: var(--gray-500);
+    --accent-foreground: var(--gray-900);
 
-    --border: var(--gray-200); /* #3f3f46 */
-    --input: var(--gray-200); /* #3f3f46 */
-    --ring: var(--accent-500); /* #6B4EFF */
+    --border: var(--gray-200);
+    --input: var(--gray-200);
+    --ring: var(--accent-500);
   }
 }
 

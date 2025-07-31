@@ -1,5 +1,7 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
   Table,
@@ -17,80 +18,87 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useUsage } from '@/hooks/use-usage';
 import {
-  DollarSign,
-  TrendingUp,
   Activity,
-  Download,
-  Upload,
-  Play,
   BarChart3,
   Calendar,
+  DollarSign,
+  Download,
+  Loader2,
+  Play,
+  RefreshCw,
+  TrendingUp,
+  Upload,
 } from 'lucide-react';
 
-// Mock usage data
-const usageData = {
-  currentMonth: {
-    encoding: { used: 145, limit: 500, cost: 29.0 },
-    streaming: { used: 2340, limit: 10000, cost: 46.8 },
-    storage: { used: 89, limit: 1000, cost: 8.9 },
-  },
-  recentUsage: [
-    {
-      date: '2024-01-01',
-      encoding: 12,
-      streaming: 234,
-      storage: 5.2,
-      cost: 8.45,
-    },
-    {
-      date: '2024-01-02',
-      encoding: 8,
-      streaming: 189,
-      storage: 5.1,
-      cost: 6.23,
-    },
-    {
-      date: '2024-01-03',
-      encoding: 15,
-      streaming: 312,
-      storage: 5.3,
-      cost: 10.12,
-    },
-    {
-      date: '2024-01-04',
-      encoding: 22,
-      streaming: 445,
-      storage: 5.4,
-      cost: 14.67,
-    },
-    {
-      date: '2024-01-05',
-      encoding: 18,
-      streaming: 378,
-      storage: 5.5,
-      cost: 12.34,
-    },
-  ],
-};
+// Utility function to format large numbers
+function formatNumber(num: number): string {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
+}
 
 export default function UsagePage() {
-  const totalCost =
-    usageData.currentMonth.encoding.cost +
-    usageData.currentMonth.streaming.cost +
-    usageData.currentMonth.storage.cost;
+  const { data: usageData, isLoading, error, refetch } = useUsage();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading usage data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-2">Failed to load usage data</p>
+          <p className="text-muted-foreground text-sm">
+            {error instanceof Error ? error.message : 'Unknown error'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!usageData) {
+    return null;
+  }
+
+  const totalCost = usageData.totalCost;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-foreground text-4xl font-bold tracking-tight">
-          Usage & Cost
-        </h1>
-        <p className="text-muted-foreground max-w-2xl text-lg">
-          Monitor your video processing usage, streaming bandwidth, and
-          associated costs
-        </p>
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h1 className="text-foreground text-4xl font-bold tracking-tight">
+            Usage & Cost
+          </h1>
+          <p className="text-muted-foreground max-w-2xl text-lg">
+            Monitor your video processing usage, streaming bandwidth, and
+            associated costs
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isLoading}
+          className="flex items-center space-x-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
+        </Button>
       </div>
 
       {/* Cost Overview Cards */}
@@ -109,9 +117,18 @@ export default function UsagePage() {
               ${totalCost.toFixed(2)}
             </div>
             <div className="mt-2 flex items-center space-x-1">
-              <div className="bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400 inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
+              <div
+                className={`inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium ${
+                  usageData.growth.isPositive
+                    ? 'bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400'
+                    : 'bg-destructive-50 text-destructive-600 dark:bg-destructive-500/10 dark:text-destructive-400'
+                }`}
+              >
                 <TrendingUp className="h-3 w-3" />
-                <span>+12%</span>
+                <span>
+                  {usageData.growth.isPositive ? '+' : ''}
+                  {usageData.growth.percentage}%
+                </span>
               </div>
               <span className="text-muted-foreground text-xs">
                 vs last month
@@ -165,8 +182,12 @@ export default function UsagePage() {
             </div>
             <div className="mt-2">
               <div className="text-muted-foreground mb-1 flex justify-between text-xs">
-                <span>{usageData.currentMonth.streaming.used} GB</span>
-                <span>{usageData.currentMonth.streaming.limit} GB</span>
+                <span>
+                  {formatNumber(usageData.currentMonth.streaming.used)} GB
+                </span>
+                <span>
+                  {formatNumber(usageData.currentMonth.streaming.limit)} GB
+                </span>
               </div>
               <Progress
                 value={
@@ -247,8 +268,8 @@ export default function UsagePage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Video Streaming</span>
                   <Badge variant="secondary">
-                    {usageData.currentMonth.streaming.used}/
-                    {usageData.currentMonth.streaming.limit} GB
+                    {formatNumber(usageData.currentMonth.streaming.used)}/
+                    {formatNumber(usageData.currentMonth.streaming.limit)} GB
                   </Badge>
                 </div>
                 <Progress
@@ -341,7 +362,7 @@ export default function UsagePage() {
         <CardHeader>
           <CardTitle>Recent Usage History</CardTitle>
           <CardDescription>
-            Daily usage and cost breakdown for the past 5 days
+            Daily usage and cost breakdown for the past 7 days
           </CardDescription>
         </CardHeader>
         <CardContent>
