@@ -1,1 +1,17 @@
-yarn lint-staged
+</dev/null
+
+echo "Running type-check..."
+npm run precommit:type-check
+if [ $? -ne 0 ]; then
+  echo "Type-check failed. Aborting commit."
+  exit 1
+fi
+
+echo "Running lint-staged..."
+npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "Lint-staged failed. Aborting commit."
+  exit 1
+fi
+
+echo "Pre-commit checks passed."

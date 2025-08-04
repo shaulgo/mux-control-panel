@@ -1,32 +1,63 @@
+import { resultToHttp } from '@/lib/api/http';
 import { requireAuth } from '@/lib/auth/session';
 import { muxVideo } from '@/lib/mux/client';
-import { NextRequest, NextResponse } from 'next/server';
+import { Err, Ok, type Result } from '@/lib/mux/types';
+import { assetQuerySchema } from '@/lib/validations/upload';
+import type { NextRequest } from 'next/server';
+import { type NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+type AssetListResult = Result<
+  {
+    data: unknown[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      hasMore: boolean;
+    };
+  },
+  'AUTH_REQUIRED' | 'INVALID_QUERY' | 'MUX_LIST_ASSETS_FAILED'
+>;
+
+async function listAssets(request: NextRequest): Promise<AssetListResult> {
+  // Check auth
+  const authResult = await requireAuth().catch(() => null);
+  if (!authResult) {
+    return Err('AUTH_REQUIRED');
+  }
+
+  // Parse and validate query params
+  const { searchParams } = new URL(request.url);
+  const queryResult = assetQuerySchema.safeParse({
+    page: searchParams.get('page'),
+    limit: searchParams.get('limit'),
+    search: searchParams.get('search'),
+  });
+
+  if (!queryResult.success) {
+    return Err('INVALID_QUERY');
+  }
+
+  const { page, limit, search } = queryResult.data;
+
+  // Fetch assets from Mux
   try {
-    await requireAuth();
-
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '25');
-    const search = searchParams.get('search') || '';
-
     const response = await muxVideo.listAssets({
       limit,
       page,
     });
 
     // Filter by search if provided
-    let assets = response.data;
-    if (search) {
-      assets = assets.filter(
-        asset =>
-          asset.id.toLowerCase().includes(search.toLowerCase()) ||
-          asset.passthrough?.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+    const assets = search
+      ? response.data.filter(asset => {
+          const q = search.toLowerCase();
+          const idMatch = asset.id.toLowerCase().includes(q);
+          const pass = asset.passthrough?.toLowerCase().includes(q) ?? false;
+          return idMatch || pass;
+        })
+      : response.data;
 
-    return NextResponse.json({
+    return Ok({
       data: assets,
       pagination: {
         page,
@@ -37,12 +68,21 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Error fetching assets:', error);
-
-    const errorMessage =
-      error && typeof error === 'object' && 'message' in error
-        ? String(error.message)
-        : 'Failed to fetch assets';
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return Err('MUX_LIST_ASSETS_FAILED');
   }
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const result = await listAssets(request);
+  return resultToHttp(
+    result,
+    {
+      AUTH_REQUIRED: 401,
+      INVALID_QUERY: 400,
+      MUX_LIST_ASSETS_FAILED: 500,
+    },
+    {
+      'Cache-Control': 'private, max-age=5',
+    }
+  );
 }

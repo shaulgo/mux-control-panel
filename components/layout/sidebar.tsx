@@ -53,16 +53,16 @@ const navigation = [
   },
 ];
 
-interface SidebarProps {
+type SidebarProps = {
   className?: string;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
-}
+};
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps): React.ReactElement {
   const pathname = usePathname();
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       window.location.href = '/login';

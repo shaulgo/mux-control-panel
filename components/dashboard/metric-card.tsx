@@ -2,9 +2,9 @@
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
+import { type LucideIcon, TrendingDown, TrendingUp } from 'lucide-react';
 
-interface MetricCardProps {
+type MetricCardProps = {
   title: string;
   value: string | number;
   icon: LucideIcon;
@@ -14,7 +14,7 @@ interface MetricCardProps {
     label: string;
   };
   className?: string;
-}
+};
 
 export function MetricCard({
   title,
@@ -22,7 +22,7 @@ export function MetricCard({
   icon: Icon,
   delta,
   className,
-}: MetricCardProps) {
+}: MetricCardProps): React.ReactElement {
   return (
     <Card
       className={cn(
@@ -79,14 +79,14 @@ export function MetricCard({
 }
 
 // Specialized metric cards for common use cases
-interface StatsMetricCardProps {
+type StatsMetricCardProps = {
   title: string;
   value: string | number;
   icon: LucideIcon;
   change: number;
   changeLabel: string;
   variant?: 'default' | 'success' | 'warning' | 'error';
-}
+};
 
 export function StatsMetricCard({
   title,
@@ -95,7 +95,7 @@ export function StatsMetricCard({
   change,
   changeLabel,
   variant = 'default',
-}: StatsMetricCardProps) {
+}: StatsMetricCardProps): React.ReactElement {
   const trend = change > 0 ? 'up' : change < 0 ? 'down' : 'neutral';
   const deltaValue = change > 0 ? `+${change}%` : `${change}%`;
 
@@ -125,7 +125,7 @@ export function StatsMetricCard({
 }
 
 // Loading skeleton for metric cards
-export function MetricCardSkeleton() {
+export function MetricCardSkeleton(): React.ReactElement {
   return (
     <Card className="bg-card shadow-card border-0">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">

@@ -1,8 +1,10 @@
+import { resultToHttp } from '@/lib/api/http';
 import { requireAuth } from '@/lib/auth/session';
-import { getDailyUsage, getTotalUsage } from '@/lib/db/usage';
 import { muxData, muxVideo } from '@/lib/mux/client';
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { Err, Ok, type Result } from '@/lib/mux/types';
+import { usageQuerySchema } from '@/lib/validations/upload';
+import type { NextRequest } from 'next/server';
+import { type NextResponse } from 'next/server';
 
 // Pricing constants (adjust these based on your actual Mux pricing)
 const PRICING = {
@@ -18,213 +20,237 @@ const LIMITS = {
   STORAGE_GB: 10000, // 10TB storage
 };
 
-const PeriodQuerySchema = z.object({
-  period: z
-    .preprocess(
-      v => (v === null || v === undefined ? '30' : v),
-      z.coerce.number().int().min(1).max(365)
-    )
-    .default(30),
-});
+type UsageData = {
+  currentMonth: {
+    encoding: {
+      used: number;
+      limit: number;
+      cost: number;
+    };
+    streaming: {
+      used: number;
+      limit: number;
+      cost: number;
+    };
+    storage: {
+      used: number;
+      limit: number;
+      cost: number;
+    };
+  };
+  recentUsage: Array<{
+    date: string;
+    encoding: number;
+    streaming: number;
+    storage: number;
+    cost: number;
+  }>;
+  growth: {
+    percentage: number;
+    isPositive: boolean;
+  };
+  totalCost: number;
+};
 
-type PeriodQuery = z.infer<typeof PeriodQuerySchema>;
+type GetUsageResult = Result<
+  UsageData,
+  | 'AUTH_REQUIRED'
+  | 'INVALID_QUERY'
+  | 'MUX_LIST_ASSETS_FAILED'
+  | 'MUX_METRICS_FAILED'
+>;
 
-const ApiError = (code: string, message: string) => ({
-  ok: false as const,
-  error: { code, message },
-});
+async function getUsage(request: NextRequest): Promise<GetUsageResult> {
+  // Check auth
+  const authResult = await requireAuth().catch(() => null);
+  if (!authResult) {
+    return Err('AUTH_REQUIRED');
+  }
 
-export async function GET(request: NextRequest) {
+  // Parse and validate query params
+  const url = new URL(request.url);
+  const queryResult = usageQuerySchema.safeParse({
+    period: url.searchParams.get('period'),
+  });
+
+  if (!queryResult.success) {
+    return Err('INVALID_QUERY');
+  }
+
+  const { period } = queryResult.data;
+
+  // Build timeframe and period
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - period);
+  const timeframe = [`${period}:days`];
+
+  // 1) Encoding minutes: approximate by summing durations of assets created this month
+  type MuxAsset = { created_at?: string; duration?: number; status?: string };
+  let assets: MuxAsset[] = [];
   try {
-    // AuthN: require a logged-in session; do not redirect from API
-    await requireAuth();
+    const assetsResponse = await muxVideo.listAssets({ limit: 1000 });
+    assets = Array.isArray(assetsResponse.data) ? assetsResponse.data : [];
+  } catch (e) {
+    console.warn('Mux listAssets failed:', e);
+    return Err('MUX_LIST_ASSETS_FAILED');
+  }
 
-    const url = new URL(request.url);
-    const parse = PeriodQuerySchema.safeParse({
-      period: url.searchParams.get('period'),
-    });
-    if (!parse.success) {
-      return NextResponse.json(
-        ApiError('BAD_REQUEST', 'Invalid query parameters'),
-        { status: 400 }
+  const currentMonthStart = new Date();
+  currentMonthStart.setDate(1);
+  currentMonthStart.setHours(0, 0, 0, 0);
+  const encodingMinutes = assets
+    .filter(a => {
+      const ts = a.created_at;
+      if (typeof ts !== 'string') return false;
+      const createdAt = new Date(ts);
+      return (
+        !Number.isNaN(createdAt.getTime()) && createdAt >= currentMonthStart
       );
-    }
-    const { period } = parse.data as PeriodQuery;
+    })
+    .reduce((sum, a) => {
+      const seconds = typeof a.duration === 'number' ? a.duration : 0;
+      return a.status === 'ready' && seconds > 0
+        ? sum + Math.ceil(seconds / 60)
+        : sum;
+    }, 0);
 
-    // Get usage data from database
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - period);
+  // 2) Streaming GB: use a Mux Data metric as proxy and map to GB (placeholder conversion)
+  let streamingGB = 0;
+  const dailyStreaming: { date: string; value: number }[] = [];
+  try {
+    const overall = (await muxData.getMetrics('playback_time', {
+      timeframe,
+    })) as unknown as { data: Array<{ value?: number }> | undefined };
 
-    const dailyUsageData = await getDailyUsage(startDate, endDate);
-    const totalUsage = await getTotalUsage();
+    const dataArr = overall.data;
+    const first = dataArr && dataArr.length > 0 ? dataArr[0] : undefined;
+    const v =
+      first && typeof first.value !== 'undefined' ? first.value : undefined;
+    const totalSeconds = Number.isFinite(Number(v)) ? Number(v) : 0;
+    const totalMinutes = Math.max(0, Math.round(totalSeconds / 60));
+    streamingGB = Math.round(totalMinutes * 0.1);
 
-    // Get assets for encoding calculation
-    type MuxAsset = {
-      created_at?: string;
-      duration?: number;
-      status?: string;
-    };
-    let assets: MuxAsset[] = [];
-    let encodingMinutes = 0;
-
-    try {
-      const assetsResponse = await muxVideo.listAssets({ limit: 1000 });
-      assets = assetsResponse.data || [];
-
-      // Calculate encoding minutes from assets created this month
-      const currentMonthStart = new Date();
-      currentMonthStart.setDate(1);
-      currentMonthStart.setHours(0, 0, 0, 0);
-
-      const currentMonthAssets = assets.filter(asset => {
-        const ts = asset?.created_at;
-        if (typeof ts !== 'string') return false;
-        const createdAt = new Date(ts);
-        return (
-          !Number.isNaN(createdAt.getTime()) && createdAt >= currentMonthStart
-        );
+    // Build a simple daily series by spreading evenly across period
+    const days = Math.max(1, period);
+    const perDayGB = streamingGB / days;
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const iso = d.toISOString();
+      const dateStr = (iso.includes('T') ? iso.split('T')[0] : iso) as string;
+      dailyStreaming.push({
+        date: dateStr,
+        value: Number.isFinite(perDayGB) ? Number(perDayGB.toFixed(2)) : 0,
       });
-
-      // Calculate total encoding minutes for current month
-      encodingMinutes = currentMonthAssets.reduce((total, asset) => {
-        const duration =
-          typeof asset.duration === 'number' ? asset.duration : 0;
-        if (duration > 0 && asset.status === 'ready') {
-          return total + Math.ceil(duration / 60); // seconds to minutes
-        }
-        return total;
-      }, 0);
-    } catch (error) {
-      console.warn('Could not fetch assets for encoding calculation:', error);
-      // Use a fallback calculation based on database data if available
-      encodingMinutes = Math.round(
-        Number(totalUsage.totalStreamedMinutes) * 0.05
-      ); // Rough estimate
     }
-
-    // Get streaming data from Mux Data API
-    let streamingGB = 0;
-    try {
-      await muxData.getMetrics('video_startup_time', {
-        timeframe: [`${period}:days`],
+  } catch (e) {
+    console.warn('Mux metrics playback_time failed:', e);
+    // Keep zeros if metric unavailable
+    const days = Math.max(1, period);
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const iso = d.toISOString();
+      const dateStr = (iso.includes('T') ? iso.split('T')[0] : iso) as string;
+      dailyStreaming.push({
+        date: dateStr,
+        value: 0,
       });
-
-      // This is a simplified calculation - you might need to use different metrics
-      // depending on what data is available in your Mux account
-      streamingGB = Math.round(Number(totalUsage.totalStreamedMinutes) * 0.1); // Rough estimate
-    } catch (error) {
-      console.warn('Could not fetch streaming metrics:', error);
-      // Fallback to database data
-      streamingGB = Math.round(Number(totalUsage.totalStreamedMinutes) * 0.1);
     }
+  }
 
-    // Storage calculation from total storage
-    const storageGB = Math.round(totalUsage.totalStorageGb);
+  // 3) Storage GB: approximate via assets size
+  const storageGB = Math.round(assets.length * 0.5); // placeholder: ~0.5GB per asset average
 
-    // Calculate costs
-    const encodingCost = encodingMinutes * PRICING.ENCODING_PER_MINUTE;
-    const streamingCost = streamingGB * PRICING.STREAMING_PER_GB;
-    const storageCost = storageGB * PRICING.STORAGE_PER_GB_MONTH;
+  // Pricing
+  const encodingCost = encodingMinutes * PRICING.ENCODING_PER_MINUTE;
+  const streamingCost = streamingGB * PRICING.STREAMING_PER_GB;
+  const storageCost = storageGB * PRICING.STORAGE_PER_GB_MONTH;
 
-    // Format recent usage data
-    const recentUsage = dailyUsageData.slice(-7).map(day => {
-      const dayStreamingGB = Math.round(Number(day.streamedMinutes) * 0.1);
-      const dayStorageGB = Math.round(day.storageGb);
-      const dayEncodingMinutes = Math.round(Math.random() * 30); // Simplified - you might want to track this separately
-
-      const dayCost =
-        dayEncodingMinutes * PRICING.ENCODING_PER_MINUTE +
-        dayStreamingGB * PRICING.STREAMING_PER_GB +
-        dayStorageGB * PRICING.STORAGE_PER_GB_MONTH;
-
-      return {
-        date: day.day.toISOString().split('T')[0],
-        encoding: dayEncodingMinutes,
-        streaming: dayStreamingGB,
-        storage: dayStorageGB,
-        cost: Number(dayCost.toFixed(2)),
-      };
-    });
-
-    // Calculate month-over-month growth (simplified)
-    let growthPercentage = 0;
-    try {
-      const currentMonthStart = new Date();
-      currentMonthStart.setDate(1);
-      currentMonthStart.setHours(0, 0, 0, 0);
-
-      const previousMonthStart = new Date(currentMonthStart);
-      previousMonthStart.setMonth(previousMonthStart.getMonth() - 1);
-
-      const previousMonthAssets = assets.filter(asset => {
-        const ts = asset?.created_at;
-        if (typeof ts !== 'string') return false;
-        const createdAt = new Date(ts);
-        const valid = !Number.isNaN(createdAt.getTime());
-        return (
-          valid &&
-          createdAt >= previousMonthStart &&
-          createdAt < currentMonthStart
-        );
-      });
-
-      const previousMonthCost = previousMonthAssets.length * 10; // Simplified calculation
-      const currentTotalCost = encodingCost + streamingCost + storageCost;
-
-      if (previousMonthCost > 0) {
-        growthPercentage = Math.round(
-          ((currentTotalCost - previousMonthCost) / previousMonthCost) * 100
-        );
-      } else if (currentTotalCost > 0) {
-        growthPercentage = 100; // 100% growth if we had no cost last month but have cost this month
-      }
-    } catch (error) {
-      console.warn('Could not calculate growth percentage:', error);
-      growthPercentage = 0;
-    }
-
-    const usageData = {
-      currentMonth: {
-        encoding: {
-          used: encodingMinutes,
-          limit: LIMITS.ENCODING_MINUTES,
-          cost: Number(encodingCost.toFixed(2)),
-        },
-        streaming: {
-          used: streamingGB,
-          limit: LIMITS.STREAMING_GB,
-          cost: Number(streamingCost.toFixed(2)),
-        },
-        storage: {
-          used: storageGB,
-          limit: LIMITS.STORAGE_GB,
-          cost: Number(storageCost.toFixed(2)),
-        },
-      },
-      recentUsage,
-      growth: {
-        percentage: growthPercentage,
-        isPositive: growthPercentage >= 0,
-      },
-      totalCost: Number(
-        (encodingCost + streamingCost + storageCost).toFixed(2)
-      ),
-    };
-
-    // Private responses for per-user data; small client cache ok
-    return NextResponse.json(usageData, {
-      status: 200,
-      headers: { 'Cache-Control': 'private, max-age=30' },
-    });
-  } catch (error: unknown) {
-    console.error('Error fetching usage data:', error);
-    const message =
-      error && typeof error === 'object' && 'message' in error
-        ? String((error as { message?: unknown }).message)
-        : 'Failed to fetch usage data';
-    return NextResponse.json(ApiError('INTERNAL_ERROR', message), {
-      status: 500,
+  // recentUsage: last up-to-7 days from the period
+  const recentDays: {
+    date: string;
+    encoding: number;
+    streaming: number;
+    storage: number;
+    cost: number;
+  }[] = [];
+  const recentSlice = dailyStreaming.slice(-7);
+  for (const day of recentSlice) {
+    const dayEncoding = Math.round(
+      encodingMinutes / Math.max(7, recentSlice.length)
+    );
+    const dayStreaming = Math.round(Number.isFinite(day.value) ? day.value : 0);
+    const dayStorage = Math.round(storageGB / Math.max(7, recentSlice.length));
+    const dayCost =
+      dayEncoding * PRICING.ENCODING_PER_MINUTE +
+      dayStreaming * PRICING.STREAMING_PER_GB +
+      dayStorage * PRICING.STORAGE_PER_GB_MONTH;
+    recentDays.push({
+      date: day.date,
+      encoding: dayEncoding,
+      streaming: dayStreaming,
+      storage: dayStorage,
+      cost: Number(dayCost.toFixed(2)),
     });
   }
+
+  // Growth (simplified): compare this month's total cost with a naive previous-month proxy
+  let growthPercentage = 0;
+  try {
+    const currentTotalCost = encodingCost + streamingCost + storageCost;
+    const previousMonthProxy = Math.max(1, assets.length - 5) * 5; // placeholder proxy
+    if (previousMonthProxy > 0) {
+      growthPercentage = Math.round(
+        ((currentTotalCost - previousMonthProxy) / previousMonthProxy) * 100
+      );
+    }
+  } catch {
+    growthPercentage = 0;
+  }
+
+  const usageData: UsageData = {
+    currentMonth: {
+      encoding: {
+        used: encodingMinutes,
+        limit: LIMITS.ENCODING_MINUTES,
+        cost: Number(encodingCost.toFixed(2)),
+      },
+      streaming: {
+        used: streamingGB,
+        limit: LIMITS.STREAMING_GB,
+        cost: Number(streamingCost.toFixed(2)),
+      },
+      storage: {
+        used: storageGB,
+        limit: LIMITS.STORAGE_GB,
+        cost: Number(storageCost.toFixed(2)),
+      },
+    },
+    recentUsage: recentDays,
+    growth: {
+      percentage: growthPercentage,
+      isPositive: growthPercentage >= 0,
+    },
+    totalCost: Number((encodingCost + streamingCost + storageCost).toFixed(2)),
+  };
+
+  return Ok(usageData);
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const result = await getUsage(request);
+  return resultToHttp(
+    result,
+    {
+      AUTH_REQUIRED: 401,
+      INVALID_QUERY: 400,
+      MUX_LIST_ASSETS_FAILED: 500,
+      MUX_METRICS_FAILED: 500,
+    },
+    {
+      'Cache-Control': 'private, max-age=30',
+    }
+  );
 }

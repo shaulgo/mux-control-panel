@@ -15,6 +15,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "type-check": "tsc --noEmit",
+    "precommit:type-check": "tsc --noEmit",
+    "precommit:lint": "eslint --max-warnings=0 --cache .",
+    "analyze:deps": "tsx scripts/analyze-dependencies.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -90,6 +93,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "expect-type": "^1.2.2",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "lint-staged": "^16.1.2",
@@ -99,7 +103,7 @@
     "prisma": "^6.13.0",
     "tailwindcss": "^4.1.11",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   },
@@ -111,6 +115,9 @@
     "*.{json,md,css}": [
       "prettier --write"
     ]
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run precommit:type-check && npx lint-staged"
   },
   "engines": {
     "node": ">=18.0.0",

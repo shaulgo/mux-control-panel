@@ -12,14 +12,15 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAssets, useDeleteAsset } from '@/hooks/use-assets';
-import type { MuxAsset } from '@/lib/mux/types';
+import type { AppAsset } from '@/lib/mux/types';
+import { assetId } from '@/lib/mux/types';
 import { Grid, List, Search, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-export default function AssetsPage() {
+export default function AssetsPage(): React.ReactElement {
   const [search, setSearch] = useState('');
-  const [selectedAsset, setSelectedAsset] = useState<MuxAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<AppAsset | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
@@ -27,22 +28,22 @@ export default function AssetsPage() {
   const deleteAssetMutation = useDeleteAsset();
   const router = useRouter();
 
-  const handleViewAsset = (asset: MuxAsset) => {
+  const handleViewAsset = (asset: AppAsset): void => {
     setSelectedAsset(asset);
     setDrawerOpen(true);
   };
 
-  const handleDeleteAsset = async (assetId: string) => {
+  const handleDeleteAsset = async (id: string): Promise<void> => {
     if (confirm('Are you sure you want to delete this asset?')) {
       try {
-        await deleteAssetMutation.mutateAsync(assetId);
+        await deleteAssetMutation.mutateAsync(assetId(id));
       } catch (error) {
         console.error('Failed to delete asset:', error);
       }
     }
   };
 
-  const assets = assetsData?.data || [];
+  const assets = assetsData?.data ?? [];
 
   return (
     <div className="space-y-8">

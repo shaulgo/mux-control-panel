@@ -5,29 +5,29 @@ import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-interface EnhancedSearchProps {
+type EnhancedSearchProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
-}
+};
 
 export function EnhancedSearch({
   value,
   onChange,
   placeholder = 'Search...',
   className,
-}: EnhancedSearchProps) {
+}: EnhancedSearchProps): React.ReactElement {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
   // Keyboard shortcut: "/" to focus search
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       // Focus search when "/" is pressed (and not in an input)
       if (
         e.key === '/' &&
-        !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)
+        !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)
       ) {
         e.preventDefault();
         inputRef.current?.focus();
@@ -112,19 +112,19 @@ export function EnhancedSearch({
 }
 
 // Specialized search for assets
-interface AssetSearchProps {
+type AssetSearchProps = {
   value: string;
   onChange: (value: string) => void;
   resultsCount?: number;
   isLoading?: boolean;
-}
+};
 
 export function AssetSearch({
   value,
   onChange,
   resultsCount,
   isLoading,
-}: AssetSearchProps) {
+}: AssetSearchProps): React.ReactElement {
   return (
     <div className="space-y-2">
       <EnhancedSearch

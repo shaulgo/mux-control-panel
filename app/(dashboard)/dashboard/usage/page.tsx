@@ -43,7 +43,9 @@ function formatNumber(num: number): string {
   return num.toString();
 }
 
-export default function UsagePage() {
+import React from 'react';
+
+export default function UsagePage(): React.ReactElement {
   const { data: usageData, isLoading, error, refetch } = useUsage();
 
   if (isLoading) {
@@ -62,19 +64,25 @@ export default function UsagePage() {
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-2">Failed to load usage data</p>
-          <p className="text-muted-foreground text-sm">
-            {error instanceof Error ? error.message : 'Unknown error'}
-          </p>
+          <p className="text-muted-foreground text-sm">Unknown error</p>
         </div>
       </div>
     );
   }
 
   if (!usageData) {
-    return null;
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">No usage data available.</p>
+        </div>
+      </div>
+    );
   }
 
-  const totalCost = usageData.totalCost;
+  const data = usageData;
+
+  const totalCost = data.totalCost;
 
   return (
     <div className="space-y-6">
@@ -92,11 +100,13 @@ export default function UsagePage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => refetch()}
+          onClick={(): void => {
+            void refetch();
+          }}
           disabled={isLoading}
           className="flex items-center space-x-2"
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className="h-4 w-4" />
           <span>Refresh</span>
         </Button>
       </div>
@@ -117,18 +127,9 @@ export default function UsagePage() {
               ${totalCost.toFixed(2)}
             </div>
             <div className="mt-2 flex items-center space-x-1">
-              <div
-                className={`inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium ${
-                  usageData.growth.isPositive
-                    ? 'bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400'
-                    : 'bg-destructive-50 text-destructive-600 dark:bg-destructive-500/10 dark:text-destructive-400'
-                }`}
-              >
+              <div className="inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
                 <TrendingUp className="h-3 w-3" />
-                <span>
-                  {usageData.growth.isPositive ? '+' : ''}
-                  {usageData.growth.percentage}%
-                </span>
+                <span>{data.growth.percentage}%</span>
               </div>
               <span className="text-muted-foreground text-xs">
                 vs last month
@@ -148,17 +149,17 @@ export default function UsagePage() {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              ${usageData.currentMonth.encoding.cost.toFixed(2)}
+              ${data.currentMonth.encoding.cost.toFixed(2)}
             </div>
             <div className="mt-2">
               <div className="text-muted-foreground mb-1 flex justify-between text-xs">
-                <span>{usageData.currentMonth.encoding.used} min</span>
-                <span>{usageData.currentMonth.encoding.limit} min</span>
+                <span>{data.currentMonth.encoding.used} min</span>
+                <span>{data.currentMonth.encoding.limit} min</span>
               </div>
               <Progress
                 value={
-                  (usageData.currentMonth.encoding.used /
-                    usageData.currentMonth.encoding.limit) *
+                  (data.currentMonth.encoding.used /
+                    data.currentMonth.encoding.limit) *
                   100
                 }
                 className="h-2"
@@ -178,21 +179,19 @@ export default function UsagePage() {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              ${usageData.currentMonth.streaming.cost.toFixed(2)}
+              ${data.currentMonth.streaming.cost.toFixed(2)}
             </div>
             <div className="mt-2">
               <div className="text-muted-foreground mb-1 flex justify-between text-xs">
+                <span>{formatNumber(data.currentMonth.streaming.used)} GB</span>
                 <span>
-                  {formatNumber(usageData.currentMonth.streaming.used)} GB
-                </span>
-                <span>
-                  {formatNumber(usageData.currentMonth.streaming.limit)} GB
+                  {formatNumber(data.currentMonth.streaming.limit)} GB
                 </span>
               </div>
               <Progress
                 value={
-                  (usageData.currentMonth.streaming.used /
-                    usageData.currentMonth.streaming.limit) *
+                  (data.currentMonth.streaming.used /
+                    data.currentMonth.streaming.limit) *
                   100
                 }
                 className="h-2"
@@ -212,17 +211,17 @@ export default function UsagePage() {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              ${usageData.currentMonth.storage.cost.toFixed(2)}
+              ${data.currentMonth.storage.cost.toFixed(2)}
             </div>
             <div className="mt-2">
               <div className="text-muted-foreground mb-1 flex justify-between text-xs">
-                <span>{usageData.currentMonth.storage.used} GB</span>
-                <span>{usageData.currentMonth.storage.limit} GB</span>
+                <span>{data.currentMonth.storage.used} GB</span>
+                <span>{data.currentMonth.storage.limit} GB</span>
               </div>
               <Progress
                 value={
-                  (usageData.currentMonth.storage.used /
-                    usageData.currentMonth.storage.limit) *
+                  (data.currentMonth.storage.used /
+                    data.currentMonth.storage.limit) *
                   100
                 }
                 className="h-2"
@@ -251,14 +250,14 @@ export default function UsagePage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Video Encoding</span>
                   <Badge variant="secondary">
-                    {usageData.currentMonth.encoding.used}/
-                    {usageData.currentMonth.encoding.limit} min
+                    {data.currentMonth.encoding.used}/
+                    {data.currentMonth.encoding.limit} min
                   </Badge>
                 </div>
                 <Progress
                   value={
-                    (usageData.currentMonth.encoding.used /
-                      usageData.currentMonth.encoding.limit) *
+                    (data.currentMonth.encoding.used /
+                      data.currentMonth.encoding.limit) *
                     100
                   }
                 />
@@ -268,14 +267,14 @@ export default function UsagePage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Video Streaming</span>
                   <Badge variant="secondary">
-                    {formatNumber(usageData.currentMonth.streaming.used)}/
-                    {formatNumber(usageData.currentMonth.streaming.limit)} GB
+                    {formatNumber(data.currentMonth.streaming.used)}/
+                    {formatNumber(data.currentMonth.streaming.limit)} GB
                   </Badge>
                 </div>
                 <Progress
                   value={
-                    (usageData.currentMonth.streaming.used /
-                      usageData.currentMonth.streaming.limit) *
+                    (data.currentMonth.streaming.used /
+                      data.currentMonth.streaming.limit) *
                     100
                   }
                 />
@@ -285,14 +284,14 @@ export default function UsagePage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Video Storage</span>
                   <Badge variant="secondary">
-                    {usageData.currentMonth.storage.used}/
-                    {usageData.currentMonth.storage.limit} GB
+                    {data.currentMonth.storage.used}/
+                    {data.currentMonth.storage.limit} GB
                   </Badge>
                 </div>
                 <Progress
                   value={
-                    (usageData.currentMonth.storage.used /
-                      usageData.currentMonth.storage.limit) *
+                    (data.currentMonth.storage.used /
+                      data.currentMonth.storage.limit) *
                     100
                   }
                 />
@@ -320,7 +319,7 @@ export default function UsagePage() {
                   <span className="text-sm font-medium">Encoding</span>
                 </div>
                 <span className="font-semibold">
-                  ${usageData.currentMonth.encoding.cost.toFixed(2)}
+                  ${data.currentMonth.encoding.cost.toFixed(2)}
                 </span>
               </div>
 
@@ -330,7 +329,7 @@ export default function UsagePage() {
                   <span className="text-sm font-medium">Streaming</span>
                 </div>
                 <span className="font-semibold">
-                  ${usageData.currentMonth.streaming.cost.toFixed(2)}
+                  ${data.currentMonth.streaming.cost.toFixed(2)}
                 </span>
               </div>
 
@@ -340,7 +339,7 @@ export default function UsagePage() {
                   <span className="text-sm font-medium">Storage</span>
                 </div>
                 <span className="font-semibold">
-                  ${usageData.currentMonth.storage.cost.toFixed(2)}
+                  ${data.currentMonth.storage.cost.toFixed(2)}
                 </span>
               </div>
 
@@ -377,8 +376,8 @@ export default function UsagePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {usageData.recentUsage.map((day, index) => (
-                <TableRow key={index}>
+              {data.recentUsage.map(day => (
+                <TableRow key={day.date}>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <Calendar className="text-muted-foreground h-4 w-4" />

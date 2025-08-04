@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { Header } from './header';
 import { ModernSidebar } from './modern-sidebar';
 
-interface DashboardLayoutProps {
+type DashboardLayoutProps = {
   children: React.ReactNode;
   title?: string;
-}
+};
 
-export function DashboardLayout({ children, title }: DashboardLayoutProps) {
+export function DashboardLayout({
+  children,
+  title,
+}: DashboardLayoutProps): React.ReactElement {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 

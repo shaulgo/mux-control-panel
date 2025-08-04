@@ -36,7 +36,7 @@ export const muxVideo = {
     return withRateLimit(() =>
       mux.video.assets.create({
         inputs: [{ url: input.input }],
-        playback_policies: input.playback_policy || ['public'],
+        playback_policies: input.playback_policy ?? ['public'],
         mp4_support: 'standard',
       })
     );
@@ -104,19 +104,34 @@ export const muxData = {
   async getVideoViews(params: {
     timeframe?: string[];
     filters?: string[];
-    measurement?: string;
+    measurement?: 'count' | 'sum' | 'avg' | 'median' | 'p95' | 'p99';
     order_direction?: 'asc' | 'desc';
-    group_by?: string;
+    group_by?: 'country' | 'device_category' | 'asset_id' | string;
   }) {
     return withRateLimit(() => mux.data.videoViews.list(params));
   },
 
   // Metrics
-  async getMetrics(metricId: string, params?: Record<string, unknown>) {
-    // Cast to any to bypass strict literal metricId requirement from SDK typings.
+  async getMetrics(
+    metricId:
+      | 'video_startup_time'
+      | 'player_startup_time'
+      | 'rebuffer_count'
+      | 'rebuffer_duration'
+      | 'watch_time'
+      | string,
+    params?: Record<string, unknown>
+  ) {
+    // Narrow unsafe casts and isolate at boundary
     return withRateLimit(() =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mux.data.metrics.getOverallValues(metricId as any, params as any)
+      mux.data.metrics.getOverallValues(
+        metricId as unknown as Parameters<
+          typeof mux.data.metrics.getOverallValues
+        >[0],
+        params as unknown as Parameters<
+          typeof mux.data.metrics.getOverallValues
+        >[1]
+      )
     );
   },
 
@@ -140,7 +155,10 @@ export function verifyWebhookSignature(
     );
     return true;
   } catch (error) {
-    console.error('Webhook verification failed:', error);
+    // Avoid console noise in production while keeping observability
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Webhook verification failed:', error);
+    }
     return false;
   }
 }
@@ -161,15 +179,14 @@ export function getThumbnailUrl(
 ): string {
   const params = new URLSearchParams();
 
-  if (options?.width) params.set('width', options.width.toString());
-  if (options?.height) params.set('height', options.height.toString());
-  if (options?.fit_mode) params.set('fit_mode', options.fit_mode);
-  if (options?.time) params.set('time', options.time.toString());
+  if (options?.width !== undefined) params.set('width', String(options.width));
+  if (options?.height !== undefined)
+    params.set('height', String(options.height));
+  if (options?.fit_mode !== undefined) params.set('fit_mode', options.fit_mode);
+  if (options?.time !== undefined) params.set('time', String(options.time));
 
   const queryString = params.toString();
-  return `https://image.mux.com/${playbackId}/thumbnail.jpg${
-    queryString ? `?${queryString}` : ''
-  }`;
+  return `https://image.mux.com/${playbackId}/thumbnail.jpg${queryString ? `?${queryString}` : ''}`;
 }
 
 export { mux };

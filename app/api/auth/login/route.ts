@@ -1,10 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAdmin, validateCredentials } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
+import { type NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const { email, password } = await request.json();
+    const body = (await request.json()) as unknown as {
+      email?: string;
+      password?: string;
+    };
+    const email = String(body.email ?? '');
+    const password = String(body.password ?? '');
 
     // Validate input
     const validation = validateCredentials(email, password);
@@ -19,7 +24,7 @@ export async function POST(request: NextRequest) {
     const authResult = await authenticateAdmin(email, password);
     if (!authResult.success) {
       return NextResponse.json(
-        { error: authResult.error },
+        { error: authResult.error ?? 'Unauthorized' },
         { status: 401 }
       );
     }

@@ -4,12 +4,15 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 
-interface HeaderProps {
+type HeaderProps = {
   onMenuClick?: () => void;
   title?: string | undefined;
-}
+};
 
-export function Header({ onMenuClick, title }: HeaderProps) {
+export function Header({
+  onMenuClick,
+  title,
+}: HeaderProps): React.ReactElement {
   return (
     <header className="flex h-16 items-center justify-between border-b border-[#e5e7eb99] bg-[#ffffffcc] px-6 shadow-sm backdrop-blur-sm">
       <div className="flex items-center space-x-4">

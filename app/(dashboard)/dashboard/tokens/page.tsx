@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,8 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -26,19 +26,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  Calendar,
+  CheckCircle,
+  Clock,
+  Copy,
   Key,
+  MoreVertical,
   Plus,
   Search,
-  MoreVertical,
-  Copy,
-  Trash2,
-  Calendar,
   Shield,
-  Clock,
-  CheckCircle,
+  Trash2,
   XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 // Mock data for upload tokens
 const mockTokens = [
@@ -77,7 +77,7 @@ const mockTokens = [
   },
 ];
 
-export default function TokensPage() {
+export default function TokensPage(): React.ReactElement {
   const [search, setSearch] = useState('');
   const [tokens] = useState(mockTokens);
 

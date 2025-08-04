@@ -32,13 +32,13 @@ import {
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-interface ModernAssetsTableProps {
+type ModernAssetsTableProps = {
   assets: MuxAsset[];
   onViewAsset: (asset: MuxAsset) => void;
   onDeleteAsset: (assetId: string) => void;
   onDuplicateAsset?: (assetId: string) => void;
   isLoading?: boolean;
-}
+};
 
 export function ModernAssetsTable({
   assets,
@@ -46,31 +46,45 @@ export function ModernAssetsTable({
   onDeleteAsset,
   onDuplicateAsset,
   isLoading = false,
-}: ModernAssetsTableProps) {
+}: ModernAssetsTableProps): React.ReactElement {
   const router = useRouter();
-  const getStatusBadge = (status: string) => {
-    const variants = {
+  const getStatusBadge = (status: string): React.ReactElement => {
+    type StatusKey = 'ready' | 'preparing' | 'errored' | 'unknown';
+
+    const variants: Record<
+      StatusKey,
+      {
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+        className: string;
+      }
+    > = {
       ready: {
-        variant: 'default' as const,
+        variant: 'default',
         className:
           'bg-success-50 text-success-600 border-success-200 dark:bg-success-500/10 dark:text-success-400 dark:border-success-800',
       },
       preparing: {
-        variant: 'secondary' as const,
+        variant: 'secondary',
         className:
           'bg-warning-50 text-warning-600 border-warning-200 dark:bg-warning-500/10 dark:text-warning-400 dark:border-warning-800',
       },
       errored: {
-        variant: 'destructive' as const,
+        variant: 'destructive',
         className:
           'bg-error-50 text-error-600 border-error-200 dark:bg-error-500/10 dark:text-error-400 dark:border-error-800',
       },
+      unknown: {
+        variant: 'outline',
+        className: '',
+      },
     };
 
-    const config = variants[status as keyof typeof variants] || {
-      variant: 'outline' as const,
-      className: '',
-    };
+    const key: StatusKey =
+      status === 'ready' || status === 'preparing' || status === 'errored'
+        ? (status as StatusKey)
+        : 'unknown';
+
+    const config = variants[key];
 
     return (
       <Badge
@@ -82,13 +96,15 @@ export function ModernAssetsTable({
     );
   };
 
-  const getThumbnailUrl = (asset: MuxAsset) => {
-    const playbackId = asset.playback_ids?.[0]?.id;
-    if (!playbackId) return null;
+  const getThumbnailUrl = (asset: MuxAsset): string | null => {
+    // playback_ids may be undefined; guard and return null when absent
+    const ids = asset.playback_ids;
+    if (!ids || ids.length === 0 || !ids[0]?.id) return null;
+    const playbackId = ids[0].id;
     return `https://image.mux.com/${playbackId}/thumbnail.jpg?width=160&height=90&fit_mode=crop`;
   };
 
-  const handleRowAction = (action: string, asset: MuxAsset) => {
+  const handleRowAction = (action: string, asset: MuxAsset): void => {
     switch (action) {
       case 'view':
         onViewAsset(asset);
@@ -106,14 +122,14 @@ export function ModernAssetsTable({
         }
         break;
       case 'copy-id':
-        navigator.clipboard.writeText(asset.id);
+        void navigator.clipboard.writeText(asset.id);
         // You could add a toast notification here
         break;
       case 'share':
         const playbackId = asset.playback_ids?.[0]?.id;
         if (playbackId) {
           const shareUrl = `https://stream.mux.com/${playbackId}`;
-          navigator.clipboard.writeText(shareUrl);
+          void navigator.clipboard.writeText(shareUrl);
           // You could add a toast notification here
         }
         break;
@@ -222,24 +238,30 @@ export function ModernAssetsTable({
               >
                 {/* Preview */}
                 <TableCell className="py-4">
-                  {getThumbnailUrl(asset) ? (
-                    <div className="group relative">
-                      <Image
-                        src={getThumbnailUrl(asset)!}
-                        alt="Asset thumbnail"
-                        width={80}
-                        height={48}
-                        className="border-border/50 group-hover:border-accent-500/50 h-12 w-20 rounded-md border object-cover transition-colors"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/0 transition-colors group-hover:bg-black/20">
-                        <Play className="h-4 w-4 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                  {(() => {
+                    const thumb = getThumbnailUrl(asset);
+                    if (!thumb) {
+                      return (
+                        <div className="bg-muted border-border/50 flex h-12 w-20 items-center justify-center rounded-md border">
+                          <Play className="text-muted-foreground h-4 w-4" />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="group relative">
+                        <Image
+                          src={thumb}
+                          alt="Asset thumbnail"
+                          width={80}
+                          height={48}
+                          className="border-border/50 group-hover:border-accent-500/50 h-12 w-20 rounded-md border object-cover transition-colors"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/0 transition-colors group-hover:bg-black/20">
+                          <Play className="h-4 w-4 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="bg-muted border-border/50 flex h-12 w-20 items-center justify-center rounded-md border">
-                      <Play className="text-muted-foreground h-4 w-4" />
-                    </div>
-                  )}
+                    );
+                  })()}
                 </TableCell>
 
                 {/* Asset ID */}
@@ -249,7 +271,7 @@ export function ModernAssetsTable({
                       {asset.id.slice(0, 8)}...
                     </code>
                     <p className="text-muted-foreground text-xs">
-                      {asset.passthrough || 'Untitled'}
+                      {asset.passthrough ?? 'Untitled'}
                     </p>
                   </div>
                 </TableCell>
@@ -266,7 +288,7 @@ export function ModernAssetsTable({
 
                 {/* Aspect Ratio */}
                 <TableCell className="text-foreground py-4 text-sm">
-                  {asset.aspect_ratio || '—'}
+                  {asset.aspect_ratio ?? '—'}
                 </TableCell>
 
                 {/* Created */}

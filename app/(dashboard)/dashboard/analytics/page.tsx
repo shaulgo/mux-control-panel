@@ -35,25 +35,53 @@ type AnalyticsSummary = {
   geographicData: Array<{ country: string; views: number }>;
 };
 
-export default function AnalyticsPage() {
+export default function AnalyticsPage(): React.ReactElement {
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect((): void => {
     let cancelled = false;
-    async function load() {
+    async function load(): Promise<void> {
       try {
-        const res = await fetch('/api/analytics/summary?period=30', {
+        const res: Response = await fetch('/api/analytics/summary?period=30', {
           headers: { Accept: 'application/json' },
           cache: 'no-store',
         });
-        const json = await res.json();
-        if (!res.ok || !json?.ok) {
-          throw new Error(json?.error?.message ?? `HTTP ${res.status}`);
+        const json: unknown = await res.json();
+        if (!res.ok) {
+          // If HTTP not ok, try to read an error message from the body if present
+          const message =
+            typeof json === 'object' &&
+            json !== null &&
+            'error' in json &&
+            typeof (json as { error?: { message?: unknown } }).error ===
+              'object' &&
+            (json as { error?: { message?: unknown } }).error &&
+            'message' in (json as { error?: { message?: unknown } }).error!
+              ? String(
+                  (
+                    (json as { error?: { message?: unknown } }).error as {
+                      message?: unknown;
+                    }
+                  ).message
+                )
+              : `HTTP ${res.status}`;
+          throw new Error(message);
         }
+        // Validate shape and set data
         if (!cancelled) {
-          setData(json.data as AnalyticsSummary);
+          if (
+            typeof json === 'object' &&
+            json !== null &&
+            'ok' in json &&
+            (json as { ok?: unknown }).ok === true &&
+            'data' in json
+          ) {
+            setData((json as { data: AnalyticsSummary }).data);
+          } else {
+            throw new Error('Unexpected response shape');
+          }
         }
       } catch (e) {
         if (!cancelled) {
@@ -67,10 +95,10 @@ export default function AnalyticsPage() {
         if (!cancelled) setLoading(false);
       }
     }
-    load();
-    return () => {
+    void load();
+    return ((): void => {
       cancelled = true;
-    };
+    })();
   }, []);
 
   const totalViews = data?.overview.totalViews ?? 0;

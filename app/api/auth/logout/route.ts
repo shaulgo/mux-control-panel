@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
 import { destroySession } from '@/lib/auth/session';
+import { NextResponse } from 'next/server';
 
-export async function POST() {
+export async function POST(): Promise<NextResponse> {
   try {
     await destroySession();
     return NextResponse.json({ success: true });

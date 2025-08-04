@@ -15,14 +15,14 @@ import { Loader2, Video } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-export function LoginForm() {
+export function LoginForm(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -36,13 +36,14 @@ export function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as unknown;
 
       if (response.ok) {
         router.push('/dashboard');
         router.refresh();
       } else {
-        setError(data.error || 'Login failed');
+        const err = (data as { error?: unknown }).error;
+        setError(typeof err === 'string' ? err : 'Login failed');
       }
     } catch {
       setError('An unexpected error occurred');

@@ -10,25 +10,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { MuxAsset } from '@/lib/mux/types';
+import type { AppAsset } from '@/lib/mux/types';
 import { formatDate, formatDuration } from '@/lib/utils';
 import { Eye, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
-interface AssetsTableProps {
-  assets: MuxAsset[];
-  onViewAsset: (asset: MuxAsset) => void;
+type AssetsTableProps = {
+  assets: AppAsset[];
+  onViewAsset: (asset: AppAsset) => void;
   onDeleteAsset: (assetId: string) => void;
   isLoading?: boolean;
-}
+};
 
 export function AssetsTable({
   assets,
   onViewAsset,
   onDeleteAsset,
   isLoading = false,
-}: AssetsTableProps) {
-  const getStatusBadge = (status: string) => {
+}: AssetsTableProps): React.ReactElement {
+  const getStatusBadge = (status: string): React.ReactElement => {
     switch (status) {
       case 'ready':
         return <Badge variant="success">Ready</Badge>;
@@ -41,7 +41,7 @@ export function AssetsTable({
     }
   };
 
-  const getThumbnailUrl = (asset: MuxAsset) => {
+  const getThumbnailUrl = (asset: AppAsset): string | null => {
     const playbackId = asset.playback_ids?.[0]?.id;
     if (!playbackId) return null;
     return `https://image.mux.com/${playbackId}/thumbnail.jpg?width=160&height=90&fit_mode=crop`;
@@ -99,7 +99,7 @@ export function AssetsTable({
             <TableCell>
               {asset.duration ? formatDuration(asset.duration) : '—'}
             </TableCell>
-            <TableCell>{asset.aspect_ratio || '—'}</TableCell>
+            <TableCell>{asset.aspect_ratio ?? '—'}</TableCell>
             <TableCell>{formatDate(asset.created_at)}</TableCell>
             <TableCell>
               <div className="flex items-center space-x-2">

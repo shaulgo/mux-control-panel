@@ -1,72 +1,47 @@
+import {
+  buildSearchParams,
+  clientResultToError,
+  safeFetch,
+} from '@/lib/api/client';
+import { usageResponseSchema } from '@/lib/validations/upload';
+import type { UseQueryResult } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
+import type { z } from 'zod';
 
-type ApiSuccess<T> = { ok: true; data: T };
-type ApiFailure = { ok: false; error: { code: string; message: string } };
-type ApiResult<T> = ApiSuccess<T> | ApiFailure;
+type UsageData = Extract<
+  z.infer<typeof usageResponseSchema>,
+  { ok: true }
+>['data'];
 
-export interface UsageData {
-  currentMonth: {
-    encoding: {
-      used: number;
-      limit: number;
-      cost: number;
-    };
-    streaming: {
-      used: number;
-      limit: number;
-      cost: number;
-    };
-    storage: {
-      used: number;
-      limit: number;
-      cost: number;
-    };
-  };
-  recentUsage: Array<{
-    date: string;
-    encoding: number;
-    streaming: number;
-    storage: number;
-    cost: number;
-  }>;
-  growth: {
-    percentage: number;
-    isPositive: boolean;
-  };
-  totalCost: number;
-}
-
-interface UseUsageParams {
+type UseUsageParams = {
   period?: number; // days
-}
+};
 
-export function useUsage(params: UseUsageParams = {}) {
+export function useUsage(
+  params: UseUsageParams = {}
+): UseQueryResult<UsageData, Error> {
   const { period = 30 } = params;
 
-  return useQuery<UsageData, Error, UsageData, (string | number)[]>({
-    queryKey: ['usage', period],
+  return useQuery<UsageData, Error, UsageData, readonly [string, number]>({
+    queryKey: ['usage', period] as const,
     queryFn: async (): Promise<UsageData> => {
-      const searchParams = new URLSearchParams({ period: String(period) });
-      const res = await fetch(`/api/usage?${searchParams}`, {
-        headers: { Accept: 'application/json' },
+      const searchParams = buildSearchParams({ period });
+      const result = await safeFetch(`/api/usage?${searchParams}`, {
+        method: 'GET',
+        responseSchema: usageResponseSchema,
       });
-      const json = (await res.json()) as ApiResult<UsageData>;
 
-      if (!res.ok) {
-        const message =
-          (json as ApiFailure)?.error?.message ??
-          `HTTP ${res.status}: Failed to fetch usage data`;
-        throw new Error(message);
+      if (!result.ok) {
+        throw clientResultToError(result);
       }
-      if (!('ok' in json) || json.ok !== true) {
-        const message =
-          (json as ApiFailure)?.error?.message ?? 'Unknown server response';
-        throw new Error(message);
-      }
-      return json.data;
+
+      return result.data;
     },
     staleTime: 30_000,
     gcTime: 5 * 60_000,
     retry: failureCount => failureCount < 2,
   });
 }
+
+// Re-export the type for convenience
+export type { UsageData };

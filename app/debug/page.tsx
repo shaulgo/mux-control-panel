@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 
-export default function DebugPage() {
+export default function DebugPage(): React.ReactElement {
   return (
     <main className="from-background via-background to-muted/30 text-foreground min-h-screen space-y-8 bg-gradient-to-b p-10">
       <header className="space-y-2">

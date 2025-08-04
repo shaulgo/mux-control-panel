@@ -1,12 +1,12 @@
-import { getIronSession } from 'iron-session';
+import { getIronSession, type IronSession } from 'iron-session';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-export interface SessionData {
+export type SessionData = {
   userId: string;
   email: string;
   isLoggedIn: boolean;
-}
+};
 
 const defaultSession: SessionData = {
   userId: '',
@@ -18,7 +18,7 @@ if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET environment variable is required');
 }
 
-export async function getSession() {
+export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
   // @ts-expect-error - Next.js 15 type compatibility issue with iron-session
   const session = await getIronSession<SessionData>(cookieStore, {
@@ -41,7 +41,10 @@ export async function getSession() {
   return session;
 }
 
-export async function createSession(userId: string, email: string) {
+export async function createSession(
+  userId: string,
+  email: string
+): Promise<void> {
   const session = await getSession();
   session.userId = userId;
   session.email = email;
@@ -49,17 +52,22 @@ export async function createSession(userId: string, email: string) {
   await session.save();
 }
 
-export async function destroySession() {
+export async function destroySession(): Promise<void> {
   const session = await getSession();
-  session.destroy();
+  await session.destroy();
 }
 
-export async function requireAuth() {
+export async function requireAuth(): Promise<SessionData> {
   const session = await getSession();
 
   if (!session.isLoggedIn) {
     redirect('/login');
   }
 
-  return session;
+  // Return only the data shape, not the IronSession methods.
+  return {
+    userId: session.userId,
+    email: session.email,
+    isLoggedIn: session.isLoggedIn,
+  };
 }

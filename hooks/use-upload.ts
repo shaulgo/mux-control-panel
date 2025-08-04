@@ -1,34 +1,39 @@
-import type { UploadResult } from '@/lib/mux/types';
+import { clientResultToError, safeFetch } from '@/lib/api/client';
 import type { UploadUrlsInput } from '@/lib/validations/upload';
+import { uploadResponseSchema } from '@/lib/validations/upload';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { z } from 'zod';
 
-interface UploadResponse {
-  results: UploadResult[];
-}
+type UploadData = Extract<
+  z.infer<typeof uploadResponseSchema>,
+  { ok: true }
+>['data'];
 
-export function useUpload() {
+export function useUpload(): UseMutationResult<
+  UploadData,
+  Error,
+  UploadUrlsInput
+> {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (data: UploadUrlsInput): Promise<UploadResponse> => {
-      const response = await fetch('/api/upload', {
+  return useMutation<UploadData, Error, UploadUrlsInput>({
+    mutationFn: async (data: UploadUrlsInput): Promise<UploadData> => {
+      const result = await safeFetch('/api/upload', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(data),
+        responseSchema: uploadResponseSchema,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+      if (!result.ok) {
+        throw clientResultToError(result);
       }
 
-      return response.json();
+      return result.data;
     },
     onSuccess: () => {
       // Invalidate assets list to show new uploads
-      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      void queryClient.invalidateQueries({ queryKey: ['assets'] });
     },
   });
 }

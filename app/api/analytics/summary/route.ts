@@ -1,21 +1,15 @@
+import { resultToHttp } from '@/lib/api/http';
 import { requireAuth } from '@/lib/auth/session';
+import { Err, Ok, type Result } from '@/lib/mux/types';
 import {
   getTopAssetsByViews,
   getTotalViews,
   getViewsByCountry,
   getViewsByDevice,
 } from '@/lib/mux/utils';
-import { NextRequest, NextResponse } from 'next/server';
-
-type ApiError = {
-  ok: false;
-  error: { code: string; message: string };
-};
-
-type ApiOk<T> = {
-  ok: true;
-  data: T;
-};
+import { analyticsQuerySchema } from '@/lib/validations/upload';
+import type { NextRequest } from 'next/server';
+import { type NextResponse } from 'next/server';
 
 type AnalyticsSummary = {
   overview: {
@@ -30,22 +24,35 @@ type AnalyticsSummary = {
   geographicData: Array<{ country: string; views: number }>;
 };
 
-function error(code: string, message: string): ApiError {
-  return { ok: false, error: { code, message } };
-}
+type GetAnalyticsSummaryResult = Result<
+  { ok: true; data: AnalyticsSummary },
+  'AUTH_REQUIRED' | 'INVALID_QUERY' | 'MUX_ANALYTICS_FAILED'
+>;
 
-export async function GET(request: NextRequest) {
+async function getAnalyticsSummary(
+  request: NextRequest
+): Promise<GetAnalyticsSummaryResult> {
+  // Check auth
+  const authResult = await requireAuth().catch(() => null);
+  if (!authResult) {
+    return Err('AUTH_REQUIRED');
+  }
+
+  // Parse and validate query params
+  const url = new URL(request.url);
+  const queryResult = analyticsQuerySchema.safeParse({
+    period: url.searchParams.get('period'),
+  });
+
+  if (!queryResult.success) {
+    return Err('INVALID_QUERY');
+  }
+
+  const { period } = queryResult.data;
+  const timeframe = [`${period}:days`];
+
+  // Fetch analytics data
   try {
-    await requireAuth();
-
-    const url = new URL(request.url);
-    const periodParam = url.searchParams.get('period') ?? '30';
-    const period = Math.max(
-      1,
-      Math.min(365, Number.parseInt(periodParam, 10) || 30)
-    );
-    const timeframe = [`${period}:days`];
-
     const [totalViews, byCountry, byDevice, topAssets] = await Promise.all([
       getTotalViews(timeframe),
       getViewsByCountry(timeframe),
@@ -54,7 +61,6 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Note: We do not have asset titles without an extra join. For now, return id only.
-    // The UI can render the id or later enrich via DB metadata if desired.
     const topVideos = topAssets.map(a => ({
       id: a.assetId,
       title: a.assetId,
@@ -68,17 +74,24 @@ export async function GET(request: NextRequest) {
       geographicData: byCountry,
     };
 
-    const res: ApiOk<AnalyticsSummary> = { ok: true, data: payload };
-
-    return NextResponse.json(res, {
-      status: 200,
-      headers: { 'Cache-Control': 'private, max-age=30' },
-    });
+    return Ok({ ok: true, data: payload });
   } catch (e) {
-    const message =
-      e && typeof e === 'object' && 'message' in e
-        ? String((e as { message?: unknown }).message)
-        : 'Failed to fetch analytics summary';
-    return NextResponse.json(error('INTERNAL_ERROR', message), { status: 500 });
+    console.error('Error fetching analytics summary:', e);
+    return Err('MUX_ANALYTICS_FAILED');
   }
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const result = await getAnalyticsSummary(request);
+  return resultToHttp(
+    result,
+    {
+      AUTH_REQUIRED: 401,
+      INVALID_QUERY: 400,
+      MUX_ANALYTICS_FAILED: 500,
+    },
+    {
+      'Cache-Control': 'private, max-age=30',
+    }
+  );
 }

@@ -10,19 +10,23 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { MuxAsset } from '@/lib/mux/types';
+import type { AppAsset } from '@/lib/mux/types';
 import { formatDate, formatDuration } from '@/lib/utils';
 import MuxPlayer from '@mux/mux-player-react';
 import { Copy } from 'lucide-react';
 import Image from 'next/image';
 
-interface AssetDrawerProps {
-  asset: MuxAsset | null;
+type AssetDrawerProps = {
+  asset: AppAsset | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
-export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
+export function AssetDrawer({
+  asset,
+  open,
+  onOpenChange,
+}: AssetDrawerProps): React.ReactElement | null {
   if (!asset) return null;
 
   const playbackId = asset.playback_ids?.[0]?.id;
@@ -30,12 +34,12 @@ export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
     ? `https://image.mux.com/${playbackId}/thumbnail.jpg?width=640&height=360&fit_mode=crop`
     : null;
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = (text: string): void => {
+    void navigator.clipboard.writeText(text);
     // You could add a toast notification here
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string): React.ReactElement => {
     switch (status) {
       case 'ready':
         return <Badge variant="success">Ready</Badge>;
@@ -124,7 +128,7 @@ export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
 
                 <div>
                   <label className="text-sm font-medium">Aspect Ratio</label>
-                  <p className="text-sm">{asset.aspect_ratio || '—'}</p>
+                  <p className="text-sm">{asset.aspect_ratio ?? '—'}</p>
                 </div>
 
                 <div>
@@ -132,22 +136,20 @@ export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
                   <p className="text-sm">{formatDate(asset.created_at)}</p>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium">MP4 Support</label>
-                  <p className="text-sm">{asset.mp4_support || 'none'}</p>
-                </div>
+                {asset.passthrough && (
+                  <div>
+                    <label className="text-sm font-medium">Passthrough</label>
+                    <p className="text-sm">{asset.passthrough}</p>
+                  </div>
+                )}
               </div>
 
-              {asset.errors && (
+              {asset.status === 'errored' && (
                 <div className="border-destructive/20 bg-destructive/10 rounded-lg border p-4">
-                  <h4 className="text-destructive font-medium">Errors</h4>
-                  <ul className="mt-2 space-y-1">
-                    {asset.errors.messages?.map((message, index) => (
-                      <li key={index} className="text-destructive text-sm">
-                        {message}
-                      </li>
-                    ))}
-                  </ul>
+                  <h4 className="text-destructive font-medium">Error</h4>
+                  <p className="text-destructive mt-2 text-sm">
+                    Asset processing failed. Please try uploading again.
+                  </p>
                 </div>
               )}
             </TabsContent>
@@ -159,7 +161,7 @@ export function AssetDrawer({ asset, open, onOpenChange }: AssetDrawerProps) {
                   <div className="rounded-lg border p-3">
                     <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
                       <MuxPlayer
-                        playbackId={asset.playback_ids?.[0]?.id as string}
+                        playbackId={asset.playback_ids[0]?.id as string}
                         streamType="on-demand"
                         autoPlay={false}
                         style={{ width: '100%', height: '100%' }}

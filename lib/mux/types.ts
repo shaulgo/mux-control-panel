@@ -4,17 +4,53 @@ import type { MuxAsset, MuxPlaybackID, MuxUpload } from './client';
 // Re-export for convenience
 export type { MuxAsset, MuxPlaybackID, MuxUpload };
 
-// Mux API Response Wrappers
-export interface MuxApiResponse<T> {
-  data: T;
+// Result type for typed error handling
+export type Ok<T> = { ok: true; data: T };
+export type Err<E extends string = string> = {
+  ok: false;
+  error: { code: E; message: string };
+};
+export type Result<T, E extends string = string> = Ok<T> | Err<E>;
+
+// Result constructor functions
+export function Ok<T>(data: T): Ok<T> {
+  return { ok: true, data };
 }
 
-export interface MuxApiListResponse<T> {
-  data: T[];
+export function Err<E extends string>(code: E, message?: string): Err<E> {
+  return { ok: false, error: { code, message: message ?? code } };
 }
 
-// Legacy type aliases for backward compatibility
+// Branded/opaque ids
+export type AssetId = string & { readonly brand: unique symbol };
 export type PlaybackId = MuxPlaybackID;
+
+// AssetId constructor function
+export function assetId(id: string): AssetId {
+  return id as AssetId;
+}
+
+// Narrow MuxAsset shape we rely on (helps avoid any from SDK internals)
+export type AppAsset = {
+  id: AssetId;
+  status: MuxAsset['status'];
+  duration?: MuxAsset['duration'];
+  passthrough?: MuxAsset['passthrough'];
+  aspect_ratio?: MuxAsset['aspect_ratio'];
+  created_at: MuxAsset['created_at'];
+  playback_ids?: MuxAsset['playback_ids'];
+};
+
+// Mux API Response Wrappers
+export type MuxApiResponse<T> = {
+  data: T;
+};
+
+export type MuxApiListResponse<T> = {
+  data: T[];
+};
+
+// Track type used in UI
 export type Track = {
   id: string;
   type: 'video' | 'audio' | 'text';
@@ -28,15 +64,15 @@ export type Track = {
 export type DirectUpload = MuxUpload;
 
 // Upload Result types for API responses
-export interface UploadResult {
+export type UploadResult = {
   url: string;
   success: boolean;
-  asset?: MuxAsset | undefined;
+  asset?: AppAsset | undefined;
   error?: string | undefined;
-}
+};
 
-// Analytics types
-export interface VideoView {
+// Analytics types with strict discriminated unions
+export type VideoView = {
   view_id: string;
   viewer_time: number;
   video_title?: string;
@@ -67,23 +103,63 @@ export interface VideoView {
   watch_time?: number;
   view_start?: string;
   view_end?: string;
-}
+};
 
-export interface MetricValue {
+export type MetricValue = {
   value: number;
   date?: string;
   hour?: string;
-}
+};
 
-export interface Metric {
+export type Metric = {
   name: string;
   data: MetricValue[];
   total_row_count?: number;
   timeframe?: string[];
-}
+};
+
+// Mux Data API response types with proper discriminated unions
+export type MuxDataResponse<T = unknown> = {
+  data: T[];
+  total_row_count?: number;
+  timeframe?: string[];
+};
+
+// Specific analytics row types
+export type MuxViewRow = {
+  value: number;
+};
+
+export type MuxCountryRow = MuxViewRow & {
+  country: string;
+};
+
+export type MuxDeviceRow = MuxViewRow & {
+  device_category: string;
+};
+
+export type MuxAssetRow = MuxViewRow & {
+  asset_id: string;
+};
+
+// Analytics aggregation results
+export type CountryViews = {
+  country: string;
+  views: number;
+};
+
+export type DeviceViews = {
+  device: string;
+  views: number;
+};
+
+export type AssetViews = {
+  assetId: string;
+  views: number;
+};
 
 // Webhook types
-export interface WebhookEvent {
+export type WebhookEvent = {
   type: string;
   object: {
     type: string;
@@ -95,49 +171,31 @@ export interface WebhookEvent {
   accessor?: string;
   accessor_source?: string;
   request_id?: string;
-}
+};
 
-// Asset status helpers
+// Asset status helpers (discriminated union)
 export const ASSET_STATUS = {
   PREPARING: 'preparing' as const,
   READY: 'ready' as const,
   ERRORED: 'errored' as const,
 } as const;
-
-// Specific API Response Types
-export type AssetResponse = MuxApiResponse<MuxAsset>;
-export type AssetListResponse = MuxApiListResponse<MuxAsset>;
-export type UploadResponse = MuxApiResponse<MuxUpload>;
-export type UploadListResponse = MuxApiListResponse<MuxUpload>;
-
-// Upload creation parameters
-export interface UploadCreateParams {
-  cors_origin?: string;
-  new_asset_settings?: {
-    playback_policies?: ('public' | 'signed')[];
-    mp4_support?: string;
-  };
-}
-
-// Asset creation parameters
-export interface AssetCreateParams {
-  inputs: Array<{ url: string }>;
-  playback_policies?: ('public' | 'signed')[];
-  mp4_support?: string;
-  passthrough?: string;
-}
-
 export type AssetStatus = (typeof ASSET_STATUS)[keyof typeof ASSET_STATUS];
 
-export function isAssetReady(asset: MuxAsset): boolean {
+export function isAssetReady(asset: {
+  status: AssetStatus;
+}): asset is { status: 'ready' } {
   return asset.status === ASSET_STATUS.READY;
 }
 
-export function isAssetErrored(asset: MuxAsset): boolean {
+export function isAssetErrored(asset: {
+  status: AssetStatus;
+}): asset is { status: 'errored' } {
   return asset.status === ASSET_STATUS.ERRORED;
 }
 
-export function isAssetPreparing(asset: MuxAsset): boolean {
+export function isAssetPreparing(asset: {
+  status: AssetStatus;
+}): asset is { status: 'preparing' } {
   return asset.status === ASSET_STATUS.PREPARING;
 }
 
@@ -152,14 +210,14 @@ export const UPLOAD_STATUS = {
 
 export type UploadStatus = (typeof UPLOAD_STATUS)[keyof typeof UPLOAD_STATUS];
 
-export function isUploadComplete(upload: DirectUpload): boolean {
+export function isUploadComplete(upload: { status: UploadStatus }): boolean {
   return upload.status === UPLOAD_STATUS.ASSET_CREATED;
 }
 
-export function isUploadErrored(upload: DirectUpload): boolean {
+export function isUploadErrored(upload: { status: UploadStatus }): boolean {
   return upload.status === UPLOAD_STATUS.ERRORED;
 }
 
-export function isUploadWaiting(upload: DirectUpload): boolean {
+export function isUploadWaiting(upload: { status: UploadStatus }): boolean {
   return upload.status === UPLOAD_STATUS.WAITING;
 }

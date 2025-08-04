@@ -1,93 +1,135 @@
-import type { MuxAsset } from '@/lib/mux/types';
+import {
+  buildSearchParams,
+  clientResultToError,
+  safeFetch,
+} from '@/lib/api/client';
+import type { AssetId } from '@/lib/mux/types';
+import {
+  assetListResponseSchema,
+  deleteAssetResponseSchema,
+  singleAssetResponseSchema,
+} from '@/lib/validations/upload';
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { z } from 'zod';
 
-interface AssetsResponse {
-  data: MuxAsset[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    hasMore: boolean;
-  };
-}
+type AssetListData = Extract<
+  z.infer<typeof assetListResponseSchema>,
+  { ok: true }
+>['data'];
+type SingleAssetData = Extract<
+  z.infer<typeof singleAssetResponseSchema>,
+  { ok: true }
+>['data'];
+type DeleteAssetData = Extract<
+  z.infer<typeof deleteAssetResponseSchema>,
+  { ok: true }
+>['data'];
 
-interface UseAssetsParams {
+type UseAssetsParams = {
   page?: number;
   limit?: number;
   search?: string;
-}
+};
 
-export function useAssets(params: UseAssetsParams = {}) {
+export function useAssets(
+  params: UseAssetsParams = {}
+): UseQueryResult<AssetListData, Error> {
   const { page = 1, limit = 25, search = '' } = params;
 
   return useQuery({
     queryKey: ['assets', { page, limit, search }],
-    queryFn: async (): Promise<AssetsResponse> => {
-      const searchParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+    queryFn: async (): Promise<AssetListData> => {
+      const searchParams = buildSearchParams({
+        page,
+        limit,
         ...(search && { search }),
       });
 
-      const response = await fetch(`/api/assets?${searchParams}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch assets');
+      const result = await safeFetch(`/api/assets?${searchParams}`, {
+        method: 'GET',
+        responseSchema: assetListResponseSchema,
+      });
+
+      if (!result.ok) {
+        throw clientResultToError(result);
       }
-      return response.json();
+
+      return result.data;
     },
     staleTime: 30 * 1000, // 30 seconds
   });
 }
 
-export function useAsset(id: string) {
+export function useAsset(id: AssetId): UseQueryResult<SingleAssetData, Error> {
   return useQuery({
     queryKey: ['asset', id],
-    queryFn: async (): Promise<{ data: MuxAsset }> => {
-      const response = await fetch(`/api/assets/${id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch asset');
+    queryFn: async (): Promise<SingleAssetData> => {
+      const result = await safeFetch(`/api/assets/${id}`, {
+        method: 'GET',
+        responseSchema: singleAssetResponseSchema,
+      });
+
+      if (!result.ok) {
+        throw clientResultToError(result);
       }
-      return response.json();
+
+      return result.data;
     },
     enabled: !!id,
     staleTime: 60 * 1000, // 1 minute
   });
 }
 
-export function useDeleteAsset() {
+export function useDeleteAsset(): UseMutationResult<
+  DeleteAssetData,
+  Error,
+  AssetId
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (assetId: string) => {
-      const response = await fetch(`/api/assets/${assetId}`, {
+    mutationFn: async (assetId: AssetId): Promise<DeleteAssetData> => {
+      const result = await safeFetch(`/api/assets/${assetId}`, {
         method: 'DELETE',
+        responseSchema: deleteAssetResponseSchema,
       });
-      if (!response.ok) {
-        throw new Error('Failed to delete asset');
+
+      if (!result.ok) {
+        throw clientResultToError(result);
       }
-      return response.json();
+
+      return result.data;
     },
     onSuccess: () => {
       // Invalidate and refetch assets list
-      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      void queryClient.invalidateQueries({ queryKey: ['assets'] });
     },
   });
 }
 
-export function useAssetPolling(assetId: string, enabled: boolean = true) {
+export function useAssetPolling(
+  assetId: AssetId,
+  enabled: boolean = true
+): UseQueryResult<SingleAssetData, Error> {
   return useQuery({
     queryKey: ['asset', assetId, 'polling'],
-    queryFn: async (): Promise<{ data: MuxAsset }> => {
-      const response = await fetch(`/api/assets/${assetId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch asset');
+    queryFn: async (): Promise<SingleAssetData> => {
+      const result = await safeFetch(`/api/assets/${assetId}`, {
+        method: 'GET',
+        responseSchema: singleAssetResponseSchema,
+      });
+
+      if (!result.ok) {
+        throw clientResultToError(result);
       }
-      return response.json();
+
+      return result.data;
     },
     enabled: enabled && !!assetId,
     refetchInterval: query => {
       // Stop polling if asset is ready or errored
-      const data = query.state.data as { data: MuxAsset } | undefined;
+      const data = query.state.data;
       const asset = data?.data;
       if (asset?.status === 'ready' || asset?.status === 'errored') {
         return false;
@@ -97,3 +139,6 @@ export function useAssetPolling(assetId: string, enabled: boolean = true) {
     staleTime: 0, // Always consider stale for polling
   });
 }
+
+// Re-export types for convenience
+export type { AssetListData, DeleteAssetData, SingleAssetData };

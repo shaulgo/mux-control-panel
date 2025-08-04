@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,8 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -26,18 +26,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  Calendar,
+  Clock,
+  Copy,
   Library,
+  MoreVertical,
   Plus,
   Search,
-  MoreVertical,
   Settings,
   Trash2,
-  Copy,
-  Calendar,
   Video,
-  Clock,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 // Mock data for libraries
 const mockLibraries = [
@@ -70,7 +70,7 @@ const mockLibraries = [
   },
 ];
 
-export default function LibrariesPage() {
+export default function LibrariesPage(): React.ReactElement {
   const [search, setSearch] = useState('');
   const [libraries] = useState(mockLibraries);
 

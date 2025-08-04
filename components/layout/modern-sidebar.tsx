@@ -55,27 +55,27 @@ const navigation = [
   },
 ];
 
-interface SidebarProps {
+type SidebarProps = {
   className?: string;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
-}
+};
 
 export function ModernSidebar({
   className,
   collapsed = false,
   onCollapsedChange,
-}: SidebarProps) {
+}: SidebarProps): React.ReactElement {
   const pathname = usePathname();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
 
   // Keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       // Check for 'g' followed by navigation shortcuts
       if (e.key === 'g') {
-        const handleSecondKey = (secondE: KeyboardEvent) => {
+        const handleSecondKey = (secondE: KeyboardEvent): void => {
           const shortcut = navigation.find(
             item => item.shortcut === `g ${secondE.key}`
           );
@@ -99,13 +99,13 @@ export function ModernSidebar({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [router]);
 
-  const handleCollapse = () => {
+  const handleCollapse = (): void => {
     const newCollapsed = !isCollapsed;
     setIsCollapsed(newCollapsed);
     onCollapsedChange?.(newCollapsed);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       window.location.href = '/login';
