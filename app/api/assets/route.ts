@@ -28,10 +28,11 @@ async function listAssets(request: NextRequest): Promise<AssetListResult> {
 
   // Parse and validate query params
   const { searchParams } = new URL(request.url);
+  const searchValue = searchParams.get('search');
   const queryResult = assetQuerySchema.safeParse({
     page: searchParams.get('page'),
     limit: searchParams.get('limit'),
-    search: searchParams.get('search'),
+    ...(searchValue !== null ? { search: searchValue } : {}),
   });
 
   if (!queryResult.success) {
