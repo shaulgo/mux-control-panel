@@ -18,11 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { MuxAsset } from '@/lib/mux/types';
+import type { AppAssetWithMetadata } from '@/lib/mux/types';
 import { cn, formatDate, formatDuration } from '@/lib/utils';
 import {
   Copy,
   Download,
+  Edit3,
   Eye,
   MoreVertical,
   Play,
@@ -33,9 +34,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 type ModernAssetsTableProps = {
-  assets: MuxAsset[];
-  onViewAsset: (asset: MuxAsset) => void;
+  assets: AppAssetWithMetadata[];
+  onViewAsset: (asset: AppAssetWithMetadata) => void;
   onDeleteAsset: (assetId: string) => void;
+  onEditMetadata?: (asset: AppAssetWithMetadata) => void;
   onDuplicateAsset?: (assetId: string) => void;
   isLoading?: boolean;
 };
@@ -44,6 +46,7 @@ export function ModernAssetsTable({
   assets,
   onViewAsset,
   onDeleteAsset,
+  onEditMetadata,
   onDuplicateAsset,
   isLoading = false,
 }: ModernAssetsTableProps): React.ReactElement {
@@ -96,7 +99,7 @@ export function ModernAssetsTable({
     );
   };
 
-  const getThumbnailUrl = (asset: MuxAsset): string | null => {
+  const getThumbnailUrl = (asset: AppAssetWithMetadata): string | null => {
     // playback_ids may be undefined; guard and return null when absent
     const ids = asset.playback_ids;
     if (!ids || ids.length === 0 || !ids[0]?.id) return null;
@@ -104,10 +107,16 @@ export function ModernAssetsTable({
     return `https://image.mux.com/${playbackId}/thumbnail.jpg?width=160&height=90&fit_mode=crop`;
   };
 
-  const handleRowAction = (action: string, asset: MuxAsset): void => {
+  const handleRowAction = (
+    action: string,
+    asset: AppAssetWithMetadata
+  ): void => {
     switch (action) {
       case 'view':
         onViewAsset(asset);
+        break;
+      case 'edit-metadata':
+        onEditMetadata?.(asset);
         break;
       case 'duplicate':
         onDuplicateAsset?.(asset.id);
@@ -209,6 +218,9 @@ export function ModernAssetsTable({
                 Asset ID
               </TableHead>
               <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                Title
+              </TableHead>
+              <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                 Status
               </TableHead>
               <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
@@ -271,8 +283,34 @@ export function ModernAssetsTable({
                       {asset.id.slice(0, 8)}...
                     </code>
                     <p className="text-muted-foreground text-xs">
-                      {asset.passthrough ?? 'Untitled'}
+                      {asset.passthrough ?? 'No passthrough'}
                     </p>
+                  </div>
+                </TableCell>
+
+                {/* Title */}
+                <TableCell className="py-4">
+                  <div className="space-y-1">
+                    <p className="text-foreground text-sm font-medium">
+                      {asset.metadata?.title || 'Untitled'}
+                    </p>
+                    {asset.metadata?.tags && asset.metadata.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {asset.metadata.tags.slice(0, 3).map(tag => (
+                          <span
+                            key={tag}
+                            className="text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {asset.metadata.tags.length > 3 && (
+                          <span className="text-muted-foreground text-xs">
+                            +{asset.metadata.tags.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
 
@@ -316,6 +354,16 @@ export function ModernAssetsTable({
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
+                      {onEditMetadata && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleRowAction('edit-metadata', asset)
+                          }
+                        >
+                          <Edit3 className="mr-2 h-4 w-4" />
+                          Edit Metadata
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() => handleRowAction('copy-id', asset)}
                       >

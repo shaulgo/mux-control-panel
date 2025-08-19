@@ -1,6 +1,7 @@
 'use client';
 
 import { AssetDrawer } from '@/components/assets/asset-drawer';
+import { AssetMetadataEditor } from '@/components/assets/asset-metadata-editor';
 import { AssetsTable } from '@/components/assets/assets-table';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,26 +12,43 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useAssets, useDeleteAsset } from '@/hooks/use-assets';
-import type { AppAsset } from '@/lib/mux/types';
+import { useDeleteAsset, useInfiniteAssets } from '@/hooks/use-assets';
+import type { AppAssetWithMetadata } from '@/lib/mux/types';
 import { assetId } from '@/lib/mux/types';
 import { Grid, List, Search, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function AssetsPage(): React.ReactElement {
   const [search, setSearch] = useState('');
-  const [selectedAsset, setSelectedAsset] = useState<AppAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] =
+    useState<AppAssetWithMetadata | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<AppAssetWithMetadata | null>(
+    null
+  );
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
-  const { data: assetsData, isLoading, error } = useAssets({ search });
+  const {
+    data: assetsPages,
+    status,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteAssets({ search });
   const deleteAssetMutation = useDeleteAsset();
   const router = useRouter();
 
-  const handleViewAsset = (asset: AppAsset): void => {
+  const handleViewAsset = (asset: AppAssetWithMetadata): void => {
     setSelectedAsset(asset);
     setDrawerOpen(true);
+  };
+
+  const handleEditMetadata = (asset: AppAssetWithMetadata): void => {
+    setEditingAsset(asset);
+    setMetadataEditorOpen(true);
   };
 
   const handleDeleteAsset = async (id: string): Promise<void> => {
@@ -43,7 +61,29 @@ export default function AssetsPage(): React.ReactElement {
     }
   };
 
-  const assets = assetsData?.data ?? [];
+  const assets = useMemo(() => {
+    const pages = assetsPages?.pages ?? [];
+    return pages.flatMap(page => page.data);
+  }, [assetsPages]);
+
+  const isInitialLoading = status === 'pending' && !assetsPages;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(entries => {
+      const entry = entries[0];
+      if (entry && entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    });
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
     <div className="space-y-8">
@@ -98,7 +138,11 @@ export default function AssetsPage(): React.ReactElement {
           </CardHeader>
           <CardContent>
             <div className="text-foreground text-3xl font-bold">
-              {assets.filter(asset => asset.status === 'ready').length}
+              {
+                assets.filter(
+                  (asset: AppAssetWithMetadata) => asset.status === 'ready'
+                ).length
+              }
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
               <span className="text-green-600 dark:text-green-400">+8%</span>{' '}
@@ -118,7 +162,11 @@ export default function AssetsPage(): React.ReactElement {
           </CardHeader>
           <CardContent>
             <div className="text-foreground text-3xl font-bold">
-              {assets.filter(asset => asset.status === 'preparing').length}
+              {
+                assets.filter(
+                  (asset: AppAssetWithMetadata) => asset.status === 'preparing'
+                ).length
+              }
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
               <span className="text-blue-600 dark:text-blue-400">2</span> in
@@ -175,7 +223,7 @@ export default function AssetsPage(): React.ReactElement {
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Assets</CardTitle>
           <CardDescription>
-            {assets.length} asset{assets.length !== 1 ? 's' : ''} found
+            {assets.length} asset{assets.length !== 1 ? 's' : ''} loaded
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -184,12 +232,25 @@ export default function AssetsPage(): React.ReactElement {
               Failed to load assets
             </div>
           ) : (
-            <AssetsTable
-              assets={assets}
-              onViewAsset={handleViewAsset}
-              onDeleteAsset={handleDeleteAsset}
-              isLoading={isLoading}
-            />
+            <>
+              <AssetsTable
+                assets={assets}
+                onViewAsset={handleViewAsset}
+                onDeleteAsset={handleDeleteAsset}
+                isLoading={isInitialLoading}
+              />
+              <div ref={sentinelRef} className="h-10" />
+              {isFetchingNextPage && (
+                <div className="text-muted-foreground py-2 text-center text-sm">
+                  Loading more...
+                </div>
+              )}
+              {!hasNextPage && assets.length > 0 && (
+                <div className="text-muted-foreground py-2 text-center text-xs">
+                  You have reached the end.
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -199,7 +260,17 @@ export default function AssetsPage(): React.ReactElement {
         asset={selectedAsset}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
+        onEditMetadata={handleEditMetadata}
       />
+
+      {/* Metadata Editor */}
+      {editingAsset && (
+        <AssetMetadataEditor
+          assetId={assetId(editingAsset.id)}
+          open={metadataEditorOpen}
+          onOpenChange={setMetadataEditorOpen}
+        />
+      )}
     </div>
   );
 }

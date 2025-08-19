@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useLibraries } from '@/hooks/use-libraries';
 import {
   Calendar,
   Clock,
@@ -39,45 +40,16 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-// Mock data for libraries
-const mockLibraries = [
-  {
-    id: 'lib_1',
-    name: 'Production Videos',
-    description: 'Main production video content',
-    assetCount: 45,
-    createdAt: '2024-01-15',
-    status: 'active',
-    type: 'video',
-  },
-  {
-    id: 'lib_2',
-    name: 'Marketing Content',
-    description: 'Marketing and promotional videos',
-    assetCount: 23,
-    createdAt: '2024-02-01',
-    status: 'active',
-    type: 'video',
-  },
-  {
-    id: 'lib_3',
-    name: 'Training Materials',
-    description: 'Internal training and educational content',
-    assetCount: 12,
-    createdAt: '2024-01-20',
-    status: 'active',
-    type: 'video',
-  },
-];
+// Removed mock data; wired to API via useLibraries
 
 export default function LibrariesPage(): React.ReactElement {
   const [search, setSearch] = useState('');
-  const [libraries] = useState(mockLibraries);
+  const { data: libraries, isLoading, error } = useLibraries({ search });
 
-  const filteredLibraries = libraries.filter(
+  const filteredLibraries = (libraries ?? []).filter(
     library =>
       library.name.toLowerCase().includes(search.toLowerCase()) ||
-      library.description.toLowerCase().includes(search.toLowerCase())
+      (library.description ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -103,6 +75,14 @@ export default function LibrariesPage(): React.ReactElement {
         </Button>
       </div>
 
+      {/* Loading / Error */}
+      {isLoading && (
+        <div className="text-muted-foreground">Loading libraries…</div>
+      )}
+      {error && (
+        <div className="text-destructive">Failed to load libraries</div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
@@ -116,7 +96,7 @@ export default function LibrariesPage(): React.ReactElement {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              {libraries.length}
+              {libraries?.length ?? 0}
             </div>
             <div className="mt-2 flex items-center space-x-1">
               <div className="bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400 inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
@@ -138,7 +118,7 @@ export default function LibrariesPage(): React.ReactElement {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              {libraries.reduce((sum, lib) => sum + lib.assetCount, 0)}
+              {(libraries ?? []).reduce((sum, lib) => sum + lib.assetCount, 0)}
             </div>
             <div className="mt-2 flex items-center space-x-1">
               <div className="bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400 inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
@@ -160,7 +140,7 @@ export default function LibrariesPage(): React.ReactElement {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              {libraries.filter(lib => lib.status === 'active').length}
+              {libraries?.length ?? 0}
             </div>
             <div className="mt-2 flex items-center space-x-1">
               <div className="inline-flex items-center space-x-1 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
@@ -235,12 +215,7 @@ export default function LibrariesPage(): React.ReactElement {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="default"
-                      className="bg-success-50 text-success-600 border-success-200 dark:bg-success-500/10 dark:text-success-400 dark:border-success-800"
-                    >
-                      {library.status}
-                    </Badge>
+                    <Badge variant="outline">—</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="text-muted-foreground flex items-center space-x-1 text-sm">
@@ -276,6 +251,13 @@ export default function LibrariesPage(): React.ReactElement {
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredLibraries.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-muted-foreground">
+                    No libraries found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -10,26 +10,30 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { AppAsset } from '@/lib/mux/types';
+import type { AppAssetWithMetadata } from '@/lib/mux/types';
 import { formatDate, formatDuration } from '@/lib/utils';
 import MuxPlayer from '@mux/mux-player-react';
-import { Copy } from 'lucide-react';
+import { Copy, Edit3 } from 'lucide-react';
 import Image from 'next/image';
 
 type AssetDrawerProps = {
-  asset: AppAsset | null;
+  asset: AppAssetWithMetadata | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEditMetadata?: (asset: AppAssetWithMetadata) => void;
 };
 
 export function AssetDrawer({
   asset,
   open,
   onOpenChange,
+  onEditMetadata,
 }: AssetDrawerProps): React.ReactElement | null {
   if (!asset) return null;
 
-  const playbackId = asset.playback_ids?.[0]?.id;
+  // Use the asset directly since it's already typed correctly
+  const typedAsset = asset;
+  const playbackId = typedAsset.playback_ids?.[0]?.id;
   const thumbnailUrl = playbackId
     ? `https://image.mux.com/${playbackId}/thumbnail.jpg?width=640&height=360&fit_mode=crop`
     : null;
@@ -103,11 +107,11 @@ export function AssetDrawer({
                 <div>
                   <label className="text-sm font-medium">Asset ID</label>
                   <div className="flex items-center space-x-2">
-                    <code className="text-sm">{asset.id}</code>
+                    <code className="text-sm">{typedAsset.id}</code>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => copyToClipboard(asset.id)}
+                      onClick={() => copyToClipboard(typedAsset.id)}
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -116,35 +120,105 @@ export function AssetDrawer({
 
                 <div>
                   <label className="text-sm font-medium">Status</label>
-                  <div className="mt-1">{getStatusBadge(asset.status)}</div>
+                  <div className="mt-1">
+                    {getStatusBadge(typedAsset.status)}
+                  </div>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium">Duration</label>
                   <p className="text-sm">
-                    {asset.duration ? formatDuration(asset.duration) : '—'}
+                    {typedAsset.duration
+                      ? formatDuration(typedAsset.duration)
+                      : '—'}
                   </p>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium">Aspect Ratio</label>
-                  <p className="text-sm">{asset.aspect_ratio ?? '—'}</p>
+                  <p className="text-sm">{typedAsset.aspect_ratio ?? '—'}</p>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium">Created</label>
-                  <p className="text-sm">{formatDate(asset.created_at)}</p>
+                  <p className="text-sm">
+                    {typedAsset.created_at
+                      ? formatDate(typedAsset.created_at)
+                      : 'N/A'}
+                  </p>
                 </div>
 
-                {asset.passthrough && (
+                {typedAsset.passthrough && (
                   <div>
                     <label className="text-sm font-medium">Passthrough</label>
-                    <p className="text-sm">{asset.passthrough}</p>
+                    <p className="text-sm">{typedAsset.passthrough}</p>
                   </div>
                 )}
               </div>
 
-              {asset.status === 'errored' && (
+              {/* Metadata Section */}
+              <div className="border-t pt-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Metadata</h4>
+                  {onEditMetadata && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditMetadata(typedAsset)}
+                    >
+                      <Edit3 className="mr-1 h-3 w-3" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Title</label>
+                    <p className="text-sm">
+                      {typedAsset.metadata?.title ?? 'No title set'}
+                    </p>
+                  </div>
+
+                  {typedAsset.metadata?.description && (
+                    <div>
+                      <label className="text-sm font-medium">Description</label>
+                      <p className="text-sm">
+                        {typedAsset.metadata.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {typedAsset.metadata?.tags &&
+                    typedAsset.metadata.tags.length > 0 && (
+                      <div>
+                        <label className="text-sm font-medium">Tags</label>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {typedAsset.metadata.tags.map(tag => (
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {typedAsset.metadata && (
+                    <div className="text-muted-foreground text-xs">
+                      <p>
+                        Last updated:{' '}
+                        {formatDate(typedAsset.metadata.updatedAt)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {typedAsset.status === 'errored' && (
                 <div className="border-destructive/20 bg-destructive/10 rounded-lg border p-4">
                   <h4 className="text-destructive font-medium">Error</h4>
                   <p className="text-destructive mt-2 text-sm">
@@ -155,13 +229,13 @@ export function AssetDrawer({
             </TabsContent>
 
             <TabsContent value="playback" className="space-y-4">
-              {asset.playback_ids && asset.playback_ids.length > 0 ? (
+              {typedAsset.playback_ids && typedAsset.playback_ids.length > 0 ? (
                 <div className="space-y-4">
                   {/* Inline Mux Player */}
                   <div className="rounded-lg border p-3">
                     <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
                       <MuxPlayer
-                        playbackId={asset.playback_ids[0]?.id as string}
+                        playbackId={typedAsset.playback_ids[0]?.id as string}
                         streamType="on-demand"
                         autoPlay={false}
                         style={{ width: '100%', height: '100%' }}
@@ -174,7 +248,7 @@ export function AssetDrawer({
                   </div>
 
                   {/* Playback IDs and URLs */}
-                  {asset.playback_ids.map(playbackId => (
+                  {typedAsset.playback_ids.map(playbackId => (
                     <div key={playbackId.id} className="rounded-lg border p-4">
                       <div className="flex items-center justify-between">
                         <div>

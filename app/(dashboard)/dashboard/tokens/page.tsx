@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTokens } from '@/hooks/use-tokens';
 import {
   Calendar,
   CheckCircle,
@@ -38,57 +39,25 @@ import {
   Trash2,
   XCircle,
 } from 'lucide-react';
-import React, { useState } from 'react';
-
-// Mock data for upload tokens
-const mockTokens = [
-  {
-    id: 'token_1',
-    name: 'Production Upload Token',
-    token: 'mux_upload_prod_abc123...',
-    status: 'active',
-    createdAt: '2024-01-15',
-    expiresAt: '2024-07-15',
-    usageCount: 45,
-    maxUploads: 100,
-    cors: ['https://myapp.com', 'https://staging.myapp.com'],
-  },
-  {
-    id: 'token_2',
-    name: 'Development Token',
-    token: 'mux_upload_dev_xyz789...',
-    status: 'active',
-    createdAt: '2024-02-01',
-    expiresAt: '2024-08-01',
-    usageCount: 12,
-    maxUploads: 50,
-    cors: ['http://localhost:3000'],
-  },
-  {
-    id: 'token_3',
-    name: 'Marketing Campaign Token',
-    token: 'mux_upload_mkt_def456...',
-    status: 'expired',
-    createdAt: '2023-12-01',
-    expiresAt: '2024-01-01',
-    usageCount: 23,
-    maxUploads: 25,
-    cors: ['https://campaign.myapp.com'],
-  },
-];
+import React, { useMemo, useState } from 'react';
 
 export default function TokensPage(): React.ReactElement {
   const [search, setSearch] = useState('');
-  const [tokens] = useState(mockTokens);
+  const { data: tokens, isLoading, error } = useTokens({ search });
 
-  const filteredTokens = tokens.filter(
-    token =>
-      token.name.toLowerCase().includes(search.toLowerCase()) ||
-      token.token.toLowerCase().includes(search.toLowerCase())
+  const filteredTokens = useMemo(
+    () =>
+      (tokens ?? []).filter(token =>
+        token.token.toLowerCase().includes(search.toLowerCase())
+      ),
+    [tokens, search]
   );
 
-  const activeTokens = tokens.filter(token => token.status === 'active').length;
-  const totalUploads = tokens.reduce((sum, token) => sum + token.usageCount, 0);
+  const activeTokens = useMemo(
+    () => (tokens ?? []).filter(token => token.used === false).length,
+    [tokens]
+  );
+  const totalUploads = 0; // Not tracked yet
 
   return (
     <div className="space-y-6">
@@ -112,6 +81,12 @@ export default function TokensPage(): React.ReactElement {
           Create Token
         </Button>
       </div>
+
+      {/* Loading / Error */}
+      {isLoading && (
+        <div className="text-muted-foreground">Loading tokens…</div>
+      )}
+      {error && <div className="text-destructive">Failed to load tokens</div>}
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-3">
@@ -210,10 +185,8 @@ export default function TokensPage(): React.ReactElement {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
                 <TableHead>Token</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Usage</TableHead>
                 <TableHead>Expires</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">Actions</span>
@@ -223,20 +196,6 @@ export default function TokensPage(): React.ReactElement {
             <TableBody>
               {filteredTokens.map(token => (
                 <TableRow key={token.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-accent-500/10 rounded-lg p-2">
-                        <Key className="text-accent-600 h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="font-medium">{token.name}</div>
-                        <div className="text-muted-foreground text-sm">
-                          {token.cors.length} CORS domain
-                          {token.cors.length !== 1 ? 's' : ''}
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <code className="bg-muted rounded px-2 py-1 text-sm">
@@ -248,38 +207,14 @@ export default function TokensPage(): React.ReactElement {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        token.status === 'active' ? 'default' : 'destructive'
-                      }
-                      className={
-                        token.status === 'active'
-                          ? 'bg-success-50 text-success-600 border-success-200 dark:bg-success-500/10 dark:text-success-400 dark:border-success-800'
-                          : ''
-                      }
-                    >
-                      {token.status === 'active' ? (
-                        <CheckCircle className="mr-1 h-3 w-3" />
-                      ) : (
+                    <Badge variant={token.used ? 'outline' : 'default'}>
+                      {token.used ? (
                         <XCircle className="mr-1 h-3 w-3" />
+                      ) : (
+                        <CheckCircle className="mr-1 h-3 w-3" />
                       )}
-                      {token.status}
+                      {token.used ? 'used' : 'active'}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium">
-                        {token.usageCount}/{token.maxUploads}
-                      </div>
-                      <div className="bg-muted h-2 w-24 rounded-full">
-                        <div
-                          className="bg-accent-500 h-2 rounded-full transition-all duration-300"
-                          style={{
-                            width: `${(token.usageCount / token.maxUploads) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-muted-foreground flex items-center space-x-1 text-sm">
@@ -315,6 +250,13 @@ export default function TokensPage(): React.ReactElement {
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredTokens.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-muted-foreground">
+                    No tokens found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

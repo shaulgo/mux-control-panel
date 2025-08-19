@@ -29,11 +29,33 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | number): string {
   if (!date) return 'N/A';
 
-  const dateObj = new Date(date);
-  if (isNaN(dateObj.getTime())) return 'Invalid Date';
+  let dateObj: Date;
+
+  if (typeof date === 'number') {
+    // Handle Unix timestamp (seconds since epoch)
+    dateObj = new Date(date * 1000);
+  } else if (typeof date === 'string') {
+    // Handle string dates - could be ISO string or Unix timestamp as string
+    const numericDate = parseFloat(date);
+    if (!isNaN(numericDate) && date.length <= 10) {
+      // Looks like Unix timestamp as string
+      dateObj = new Date(numericDate * 1000);
+    } else {
+      // Regular ISO string or other date format
+      dateObj = new Date(date);
+    }
+  } else {
+    dateObj = new Date(date);
+  }
+
+  if (isNaN(dateObj.getTime())) {
+    // Debug logging to help identify the issue
+    console.warn('Invalid date format received:', date, typeof date);
+    return 'Invalid Date';
+  }
 
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',

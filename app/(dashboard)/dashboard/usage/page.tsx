@@ -21,14 +21,10 @@ import {
 import { useUsage } from '@/hooks/use-usage';
 import {
   Activity,
-  BarChart3,
   Calendar,
-  DollarSign,
-  Download,
   Loader2,
   Play,
   RefreshCw,
-  TrendingUp,
   Upload,
 } from 'lucide-react';
 
@@ -82,7 +78,7 @@ export default function UsagePage(): React.ReactElement {
 
   const data = usageData;
 
-  const totalCost = data.totalCost;
+  // Costs and storage are not shown until Mux Exports are ingested
 
   return (
     <div className="space-y-6">
@@ -90,11 +86,11 @@ export default function UsagePage(): React.ReactElement {
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <h1 className="text-foreground text-4xl font-bold tracking-tight">
-            Usage & Cost
+            Usage
           </h1>
           <p className="text-muted-foreground max-w-2xl text-lg">
-            Monitor your video processing usage, streaming bandwidth, and
-            associated costs
+            Monitor your encoding and watch time. Precise costs require Mux
+            Exports ingestion (coming soon).
           </p>
         </div>
         <Button
@@ -111,33 +107,8 @@ export default function UsagePage(): React.ReactElement {
         </Button>
       </div>
 
-      {/* Cost Overview Cards */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <h3 className="text-muted-foreground text-sm font-medium tracking-wide">
-              Total Cost
-            </h3>
-            <div className="bg-accent-500/10 rounded-lg p-2">
-              <DollarSign className="text-accent-600 dark:text-accent-400 h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-foreground text-4xl font-bold tracking-tight">
-              ${totalCost.toFixed(2)}
-            </div>
-            <div className="mt-2 flex items-center space-x-1">
-              <div className="inline-flex items-center space-x-1 rounded-full px-2 py-1 text-xs font-medium">
-                <TrendingUp className="h-3 w-3" />
-                <span>{data.growth.percentage}%</span>
-              </div>
-              <span className="text-muted-foreground text-xs">
-                vs last month
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
+      {/* Overview Cards */}
+      <div className="grid gap-6 md:grid-cols-2">
         <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <h3 className="text-muted-foreground text-sm font-medium tracking-wide">
@@ -149,7 +120,7 @@ export default function UsagePage(): React.ReactElement {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              ${data.currentMonth.encoding.cost.toFixed(2)}
+              {data.currentMonth.encoding.used} min
             </div>
             <div className="mt-2">
               <div className="text-muted-foreground mb-1 flex justify-between text-xs">
@@ -171,7 +142,7 @@ export default function UsagePage(): React.ReactElement {
         <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <h3 className="text-muted-foreground text-sm font-medium tracking-wide">
-              Streaming
+              Watch Time
             </h3>
             <div className="bg-accent-500/10 rounded-lg p-2">
               <Play className="text-accent-600 dark:text-accent-400 h-5 w-5" />
@@ -179,53 +150,14 @@ export default function UsagePage(): React.ReactElement {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              ${data.currentMonth.streaming.cost.toFixed(2)}
+              {formatNumber(data.currentMonth.streaming.used)} min
             </div>
             <div className="mt-2">
-              <div className="text-muted-foreground mb-1 flex justify-between text-xs">
-                <span>{formatNumber(data.currentMonth.streaming.used)} GB</span>
+              <div className="text-muted-foreground mb-1 text-xs">
                 <span>
-                  {formatNumber(data.currentMonth.streaming.limit)} GB
+                  {formatNumber(data.currentMonth.streaming.used)} min
                 </span>
               </div>
-              <Progress
-                value={
-                  (data.currentMonth.streaming.used /
-                    data.currentMonth.streaming.limit) *
-                  100
-                }
-                className="h-2"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card hover:shadow-card-hover border-0 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <h3 className="text-muted-foreground text-sm font-medium tracking-wide">
-              Storage
-            </h3>
-            <div className="bg-accent-500/10 rounded-lg p-2">
-              <Download className="text-accent-600 dark:text-accent-400 h-5 w-5" />
-            </div>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-foreground text-4xl font-bold tracking-tight">
-              ${data.currentMonth.storage.cost.toFixed(2)}
-            </div>
-            <div className="mt-2">
-              <div className="text-muted-foreground mb-1 flex justify-between text-xs">
-                <span>{data.currentMonth.storage.used} GB</span>
-                <span>{data.currentMonth.storage.limit} GB</span>
-              </div>
-              <Progress
-                value={
-                  (data.currentMonth.storage.used /
-                    data.currentMonth.storage.limit) *
-                  100
-                }
-                className="h-2"
-              />
             </div>
           </CardContent>
         </Card>
@@ -265,104 +197,24 @@ export default function UsagePage(): React.ReactElement {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Video Streaming</span>
+                  <span className="text-sm font-medium">Watch time</span>
                   <Badge variant="secondary">
-                    {formatNumber(data.currentMonth.streaming.used)}/
-                    {formatNumber(data.currentMonth.streaming.limit)} GB
+                    {formatNumber(data.currentMonth.streaming.used)} min
                   </Badge>
                 </div>
-                <Progress
-                  value={
-                    (data.currentMonth.streaming.used /
-                      data.currentMonth.streaming.limit) *
-                    100
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Video Storage</span>
-                  <Badge variant="secondary">
-                    {data.currentMonth.storage.used}/
-                    {data.currentMonth.storage.limit} GB
-                  </Badge>
-                </div>
-                <Progress
-                  value={
-                    (data.currentMonth.storage.used /
-                      data.currentMonth.storage.limit) *
-                    100
-                  }
-                />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Cost Breakdown */}
-        <Card className="shadow-card border-0">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5" />
-              <span>Cost Breakdown</span>
-            </CardTitle>
-            <CardDescription>
-              Detailed cost analysis for current month
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="bg-muted/50 flex items-center justify-between rounded-lg p-3">
-                <div className="flex items-center space-x-2">
-                  <Upload className="text-muted-foreground h-4 w-4" />
-                  <span className="text-sm font-medium">Encoding</span>
-                </div>
-                <span className="font-semibold">
-                  ${data.currentMonth.encoding.cost.toFixed(2)}
-                </span>
-              </div>
-
-              <div className="bg-muted/50 flex items-center justify-between rounded-lg p-3">
-                <div className="flex items-center space-x-2">
-                  <Play className="text-muted-foreground h-4 w-4" />
-                  <span className="text-sm font-medium">Streaming</span>
-                </div>
-                <span className="font-semibold">
-                  ${data.currentMonth.streaming.cost.toFixed(2)}
-                </span>
-              </div>
-
-              <div className="bg-muted/50 flex items-center justify-between rounded-lg p-3">
-                <div className="flex items-center space-x-2">
-                  <Download className="text-muted-foreground h-4 w-4" />
-                  <span className="text-sm font-medium">Storage</span>
-                </div>
-                <span className="font-semibold">
-                  ${data.currentMonth.storage.cost.toFixed(2)}
-                </span>
-              </div>
-
-              <div className="border-t pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold">Total</span>
-                  <span className="text-accent-600 text-lg font-bold">
-                    ${totalCost.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* No cost breakdown until Exports are ingested */}
       </div>
 
       {/* Recent Usage History */}
       <Card className="shadow-card border-0">
         <CardHeader>
-          <CardTitle>Recent Usage History</CardTitle>
-          <CardDescription>
-            Daily usage and cost breakdown for the past 7 days
-          </CardDescription>
+          <CardTitle>Recent Usage</CardTitle>
+          <CardDescription>Daily usage for the past 7 days</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -370,9 +222,7 @@ export default function UsagePage(): React.ReactElement {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Encoding (min)</TableHead>
-                <TableHead>Streaming (GB)</TableHead>
-                <TableHead>Storage (GB)</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
+                <TableHead>Watch time (min)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -386,10 +236,6 @@ export default function UsagePage(): React.ReactElement {
                   </TableCell>
                   <TableCell>{day.encoding}</TableCell>
                   <TableCell>{day.streaming}</TableCell>
-                  <TableCell>{day.storage}</TableCell>
-                  <TableCell className="text-right font-semibold">
-                    ${day.cost.toFixed(2)}
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

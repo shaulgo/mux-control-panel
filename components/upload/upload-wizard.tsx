@@ -18,8 +18,9 @@ import { useUpload } from '@/hooks/use-upload';
 import type { AppAsset, UploadResult } from '@/lib/mux/types';
 import { assetId as createAssetId } from '@/lib/mux/types';
 import {
+  uploadUrlsFormSchema,
   uploadUrlsSchema,
-  type UploadUrlsInput,
+  type UploadUrlsFormInput,
 } from '@/lib/validations/upload';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle, Clock, Copy, Upload, XCircle } from 'lucide-react';
@@ -38,15 +39,28 @@ export function UploadWizard(): React.ReactElement {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<UploadUrlsInput>({
-    resolver: zodResolver(uploadUrlsSchema),
+    setError,
+  } = useForm<UploadUrlsFormInput>({
+    resolver: zodResolver(uploadUrlsFormSchema),
   });
 
-  const onSubmit = async (data: UploadUrlsInput): Promise<void> => {
+  const onSubmit = async (data: UploadUrlsFormInput): Promise<void> => {
     setIsUploading(true);
     setResults([]);
 
     try {
+      // Validate URLs using the full schema with transform
+      const validationResult = uploadUrlsSchema.safeParse(data);
+      if (!validationResult.success) {
+        // Set form error for invalid URLs
+        setError('urls', {
+          type: 'validation',
+          message: validationResult.error.issues[0]?.message || 'Invalid URLs',
+        });
+        setIsUploading(false);
+        return;
+      }
+
       const response = await uploadMutation.mutateAsync(data);
       setResults(response.results);
       reset();

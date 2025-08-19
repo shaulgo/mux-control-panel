@@ -115,9 +115,9 @@ async function getUsage(request: NextRequest): Promise<GetUsageResult> {
         : sum;
     }, 0);
 
-  // 2) Streaming GB: use a Mux Data metric as proxy and map to GB (placeholder conversion)
-  let streamingGB = 0;
-  const dailyStreaming: { date: string; value: number }[] = [];
+  // 2) Watch time (minutes): use a Mux Data metric as overall playback time (seconds) and map to minutes
+  let watchMinutes = 0;
+  const dailyWatchTime: { date: string; value: number }[] = [];
   try {
     const overall = (await muxData.getMetrics('playback_time', {
       timeframe,
@@ -128,20 +128,21 @@ async function getUsage(request: NextRequest): Promise<GetUsageResult> {
     const v =
       first && typeof first.value !== 'undefined' ? first.value : undefined;
     const totalSeconds = Number.isFinite(Number(v)) ? Number(v) : 0;
-    const totalMinutes = Math.max(0, Math.round(totalSeconds / 60));
-    streamingGB = Math.round(totalMinutes * 0.1);
+    watchMinutes = Math.max(0, Math.round(totalSeconds / 60));
 
     // Build a simple daily series by spreading evenly across period
     const days = Math.max(1, period);
-    const perDayGB = streamingGB / days;
+    const perDayMinutes = watchMinutes / days;
     for (let i = 0; i < days; i++) {
       const d = new Date(startDate);
       d.setDate(startDate.getDate() + i);
       const iso = d.toISOString();
       const dateStr = (iso.includes('T') ? iso.split('T')[0] : iso) as string;
-      dailyStreaming.push({
+      dailyWatchTime.push({
         date: dateStr,
-        value: Number.isFinite(perDayGB) ? Number(perDayGB.toFixed(2)) : 0,
+        value: Number.isFinite(perDayMinutes)
+          ? Number(perDayMinutes.toFixed(2))
+          : 0,
       });
     }
   } catch (e) {
@@ -153,20 +154,20 @@ async function getUsage(request: NextRequest): Promise<GetUsageResult> {
       d.setDate(startDate.getDate() + i);
       const iso = d.toISOString();
       const dateStr = (iso.includes('T') ? iso.split('T')[0] : iso) as string;
-      dailyStreaming.push({
+      dailyWatchTime.push({
         date: dateStr,
         value: 0,
       });
     }
   }
 
-  // 3) Storage GB: approximate via assets size
-  const storageGB = Math.round(assets.length * 0.5); // placeholder: ~0.5GB per asset average
+  // 3) Storage GB: not available via live API -> set to 0 (authoritative data should come from Mux Exports)
+  const storageGB = 0;
 
   // Pricing
   const encodingCost = encodingMinutes * PRICING.ENCODING_PER_MINUTE;
-  const streamingCost = streamingGB * PRICING.STREAMING_PER_GB;
-  const storageCost = storageGB * PRICING.STORAGE_PER_GB_MONTH;
+  const streamingCost = 0;
+  const storageCost = 0;
 
   // recentUsage: last up-to-7 days from the period
   const recentDays: {
@@ -176,17 +177,14 @@ async function getUsage(request: NextRequest): Promise<GetUsageResult> {
     storage: number;
     cost: number;
   }[] = [];
-  const recentSlice = dailyStreaming.slice(-7);
+  const recentSlice = dailyWatchTime.slice(-7);
   for (const day of recentSlice) {
     const dayEncoding = Math.round(
       encodingMinutes / Math.max(7, recentSlice.length)
     );
     const dayStreaming = Math.round(Number.isFinite(day.value) ? day.value : 0);
     const dayStorage = Math.round(storageGB / Math.max(7, recentSlice.length));
-    const dayCost =
-      dayEncoding * PRICING.ENCODING_PER_MINUTE +
-      dayStreaming * PRICING.STREAMING_PER_GB +
-      dayStorage * PRICING.STORAGE_PER_GB_MONTH;
+    const dayCost = dayEncoding * PRICING.ENCODING_PER_MINUTE + 0 + 0;
     recentDays.push({
       date: day.date,
       encoding: dayEncoding,
@@ -196,19 +194,8 @@ async function getUsage(request: NextRequest): Promise<GetUsageResult> {
     });
   }
 
-  // Growth (simplified): compare this month's total cost with a naive previous-month proxy
-  let growthPercentage = 0;
-  try {
-    const currentTotalCost = encodingCost + streamingCost + storageCost;
-    const previousMonthProxy = Math.max(1, assets.length - 5) * 5; // placeholder proxy
-    if (previousMonthProxy > 0) {
-      growthPercentage = Math.round(
-        ((currentTotalCost - previousMonthProxy) / previousMonthProxy) * 100
-      );
-    }
-  } catch {
-    growthPercentage = 0;
-  }
+  // Growth: not calculated without authoritative cost history
+  const growthPercentage = 0;
 
   const usageData: UsageData = {
     currentMonth: {
@@ -218,7 +205,8 @@ async function getUsage(request: NextRequest): Promise<GetUsageResult> {
         cost: Number(encodingCost.toFixed(2)),
       },
       streaming: {
-        used: streamingGB,
+        // NOTE: we treat "streaming" as watch time (minutes) from Mux Data
+        used: watchMinutes,
         limit: LIMITS.STREAMING_GB,
         cost: Number(streamingCost.toFixed(2)),
       },
@@ -231,7 +219,7 @@ async function getUsage(request: NextRequest): Promise<GetUsageResult> {
     recentUsage: recentDays,
     growth: {
       percentage: growthPercentage,
-      isPositive: growthPercentage >= 0,
+      isPositive: true,
     },
     totalCost: Number((encodingCost + streamingCost + storageCost).toFixed(2)),
   };

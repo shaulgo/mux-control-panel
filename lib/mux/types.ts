@@ -41,6 +41,17 @@ export type AppAsset = {
   playback_ids?: MuxAsset['playback_ids'];
 };
 
+// Extended asset type with metadata
+export type AppAssetWithMetadata = AppAsset & {
+  metadata?: {
+    title: string | null;
+    description: string | null;
+    tags: string[];
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+};
+
 // Mux API Response Wrappers
 export type MuxApiResponse<T> = {
   data: T;

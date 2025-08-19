@@ -1,6 +1,12 @@
 import type { AssetId } from '@/lib/mux/types';
 import { z } from 'zod';
 
+// Schema for form input validation (without transform)
+export const uploadUrlsFormSchema = z.object({
+  urls: z.string().min(1, 'At least one URL is required'),
+});
+
+// Schema for API processing (with transform)
 export const uploadUrlsSchema = z.object({
   urls: z
     .string()
@@ -19,6 +25,7 @@ export const uploadUrlsSchema = z.object({
     ),
 });
 
+export type UploadUrlsFormInput = z.infer<typeof uploadUrlsFormSchema>;
 export type UploadUrlsInput = z.input<typeof uploadUrlsSchema>;
 export type UploadUrlsOutput = z.output<typeof uploadUrlsSchema>;
 

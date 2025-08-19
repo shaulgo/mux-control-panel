@@ -10,14 +10,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { AppAsset } from '@/lib/mux/types';
+import type { AppAssetWithMetadata } from '@/lib/mux/types';
 import { formatDate, formatDuration } from '@/lib/utils';
 import { Eye, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 type AssetsTableProps = {
-  assets: AppAsset[];
-  onViewAsset: (asset: AppAsset) => void;
+  assets: AppAssetWithMetadata[];
+  onViewAsset: (asset: AppAssetWithMetadata) => void;
   onDeleteAsset: (assetId: string) => void;
   isLoading?: boolean;
 };
@@ -41,7 +41,7 @@ export function AssetsTable({
     }
   };
 
-  const getThumbnailUrl = (asset: AppAsset): string | null => {
+  const getThumbnailUrl = (asset: AppAssetWithMetadata): string | null => {
     const playbackId = asset.playback_ids?.[0]?.id;
     if (!playbackId) return null;
     return `https://image.mux.com/${playbackId}/thumbnail.jpg?width=160&height=90&fit_mode=crop`;
@@ -71,6 +71,7 @@ export function AssetsTable({
         <TableRow>
           <TableHead className="w-20">Preview</TableHead>
           <TableHead>Asset ID</TableHead>
+          <TableHead>Title</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Duration</TableHead>
           <TableHead>Aspect Ratio</TableHead>
@@ -95,12 +96,26 @@ export function AssetsTable({
               )}
             </TableCell>
             <TableCell className="font-mono text-sm">{asset.id}</TableCell>
+            <TableCell>
+              <div className="space-y-1">
+                <p className="font-medium">
+                  {asset.metadata?.title ?? 'Untitled'}
+                </p>
+                {asset.metadata?.description && (
+                  <p className="text-muted-foreground max-w-32 truncate text-xs">
+                    {asset.metadata.description}
+                  </p>
+                )}
+              </div>
+            </TableCell>
             <TableCell>{getStatusBadge(asset.status)}</TableCell>
             <TableCell>
               {asset.duration ? formatDuration(asset.duration) : '—'}
             </TableCell>
             <TableCell>{asset.aspect_ratio ?? '—'}</TableCell>
-            <TableCell>{formatDate(asset.created_at)}</TableCell>
+            <TableCell>
+              {asset.created_at ? formatDate(asset.created_at) : 'N/A'}
+            </TableCell>
             <TableCell>
               <div className="flex items-center space-x-2">
                 <Button

@@ -1,4 +1,28 @@
-import { muxData, muxVideo, type MuxAsset } from './client';
+import { muxVideo } from './client';
+
+export async function enforceRestrictionOnAsset(
+  assetId: string,
+  restrictionId: string
+): Promise<void> {
+  try {
+    // Fetch asset to list existing playback IDs
+    const asset = await muxVideo.getAsset(assetId);
+    const playbackIds = (asset.playback_ids ?? []).map(p => p.id);
+    // Delete existing playback IDs
+    for (const pid of playbackIds) {
+      await muxVideo.deletePlaybackId(assetId, pid);
+    }
+    // Create a new restricted playback ID
+    await muxVideo.createRestrictedPlaybackId(assetId, restrictionId, 'public');
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Failed to enforce restriction on asset', assetId, e);
+    }
+    throw e;
+  }
+}
+
+import { muxData, type MuxAsset } from './client';
 import type {
   AssetViews,
   CountryViews,

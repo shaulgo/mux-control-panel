@@ -75,6 +75,20 @@ export const muxVideo = {
     );
   },
 
+  async createRestrictedPlaybackId(
+    assetId: string,
+    restrictionId: string,
+    policy: 'public' | 'signed' = 'public'
+  ) {
+    return withRateLimit(() =>
+      mux.video.assets.createPlaybackId(assetId, {
+        policy,
+        // Attach playback restriction to this playback ID
+        playback_restrictions: [restrictionId],
+      } as unknown as Parameters<typeof mux.video.assets.createPlaybackId>[1])
+    );
+  },
+
   async deletePlaybackId(assetId: string, playbackId: string) {
     return withRateLimit(() =>
       mux.video.assets.deletePlaybackId(assetId, playbackId)

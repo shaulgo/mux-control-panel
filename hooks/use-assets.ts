@@ -10,7 +10,12 @@ import {
   singleAssetResponseSchema,
 } from '@/lib/validations/upload';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import type { z } from 'zod';
 
 type AssetListData = Extract<
@@ -42,6 +47,43 @@ export function useAssets(
     queryFn: async (): Promise<AssetListData> => {
       const searchParams = buildSearchParams({
         page,
+        limit,
+        ...(search && { search }),
+      });
+
+      const result = await safeFetch(`/api/assets?${searchParams}`, {
+        method: 'GET',
+        responseSchema: assetListResponseSchema,
+      });
+
+      if (!result.ok) {
+        throw clientResultToError(result);
+      }
+
+      return result.data;
+    },
+    staleTime: 30 * 1000, // 30 seconds
+  });
+}
+
+type UseInfiniteAssetsParams = {
+  limit?: number;
+  search?: string;
+};
+
+export function useInfiniteAssets(
+  params: UseInfiniteAssetsParams = {}
+) {
+  const { limit = 25, search = '' } = params;
+
+  return useInfiniteQuery({
+    queryKey: ['assets', 'infinite', { limit, search }],
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: AssetListData) =>
+      lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined,
+    queryFn: async ({ pageParam }): Promise<AssetListData> => {
+      const searchParams = buildSearchParams({
+        page: pageParam as number,
         limit,
         ...(search && { search }),
       });

@@ -8,6 +8,7 @@ import {
   Key,
   Library,
   LogOut,
+  Settings,
   Upload,
   Video,
 } from 'lucide-react';
@@ -34,7 +35,7 @@ const navigation = [
     shortcut: 'g l',
   },
   {
-    name: 'Usage & Cost',
+    name: 'Usage',
     href: '/dashboard/usage',
     icon: BarChart3,
     shortcut: 'g c',
@@ -50,6 +51,12 @@ const navigation = [
     href: '/dashboard/tokens',
     icon: Key,
     shortcut: 'g t',
+  },
+  {
+    name: 'Settings',
+    href: '/dashboard/settings',
+    icon: Settings,
+    shortcut: 'g s',
   },
 ];
 
