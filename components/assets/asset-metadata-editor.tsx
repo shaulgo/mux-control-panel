@@ -47,14 +47,16 @@ export function AssetMetadataEditor({
   useEffect(() => {
     if (metadata) {
       setFormData({
-        title: metadata.title || '',
-        description: metadata.description || '',
-        tags: metadata.tags || [],
+        title: metadata.title ?? '',
+        description: metadata.description ?? '',
+        tags: metadata.tags,
       });
     }
   }, [metadata]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
 
     try {
@@ -80,7 +82,7 @@ export function AssetMetadataEditor({
     }
   };
 
-  const addTag = () => {
+  const addTag = (): void => {
     if (
       newTag.trim() &&
       formData.tags &&
@@ -88,20 +90,20 @@ export function AssetMetadataEditor({
     ) {
       setFormData(prev => ({
         ...prev,
-        tags: [...(prev.tags || []), newTag.trim()],
+        tags: [...(prev.tags ?? []), newTag.trim()],
       }));
       setNewTag('');
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
+  const removeTag = (tagToRemove: string): void => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags?.filter(tag => tag !== tagToRemove) || [],
+      tags: prev.tags?.filter(tag => tag !== tagToRemove) ?? [],
     }));
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addTag();
@@ -130,7 +132,7 @@ export function AssetMetadataEditor({
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
-                value={formData.title || ''}
+                value={formData.title ?? ''}
                 onChange={e =>
                   setFormData(prev => ({ ...prev, title: e.target.value }))
                 }
@@ -143,7 +145,7 @@ export function AssetMetadataEditor({
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                value={formData.description || ''}
+                value={formData.description ?? ''}
                 onChange={e =>
                   setFormData(prev => ({
                     ...prev,
@@ -190,7 +192,7 @@ export function AssetMetadataEditor({
                   type="button"
                   onClick={addTag}
                   disabled={
-                    !newTag.trim() || (formData.tags?.length || 0) >= 20
+                    !newTag.trim() || (formData.tags?.length ?? 0) >= 20
                   }
                   size="icon"
                   variant="outline"

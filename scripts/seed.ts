@@ -1,10 +1,10 @@
 import { db } from '../lib/db/client';
 
-async function main() {
+async function main(): Promise<void> {
   console.log('🌱 Seeding database...');
 
   // Create sample libraries
-  const demoLibrary = await db.library.create({
+  await db.library.create({
     data: {
       name: 'Demo Library',
       slug: 'demo-library',
@@ -12,7 +12,7 @@ async function main() {
     },
   });
 
-  const marketingLibrary = await db.library.create({
+  await db.library.create({
     data: {
       name: 'Marketing Videos',
       slug: 'marketing-videos',
@@ -80,10 +80,10 @@ async function main() {
 }
 
 main()
-  .catch(e => {
+  .catch((e: unknown) => {
     console.error('❌ Error seeding database:', e);
     process.exit(1);
   })
-  .finally(async () => {
-    await db.$disconnect();
+  .finally(() => {
+    void db.$disconnect();
   });

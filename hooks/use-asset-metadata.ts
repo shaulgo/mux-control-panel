@@ -1,4 +1,5 @@
 import type { AssetId } from '@/lib/mux/types';
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export type AssetMetadata = {
@@ -16,7 +17,9 @@ export type UpdateAssetMetadataInput = {
   tags?: string[];
 };
 
-export function useAssetMetadata(assetId: AssetId) {
+export function useAssetMetadata(
+  assetId: AssetId
+): UseQueryResult<AssetMetadata | null, Error> {
   return useQuery({
     queryKey: ['asset', assetId, 'metadata'],
     queryFn: async (): Promise<AssetMetadata | null> => {
@@ -27,13 +30,17 @@ export function useAssetMetadata(assetId: AssetId) {
         }
         throw new Error(`Failed to fetch metadata: ${response.statusText}`);
       }
-      return response.json();
+      return (await response.json()) as AssetMetadata;
     },
     enabled: !!assetId,
   });
 }
 
-export function useUpdateAssetMetadata() {
+export function useUpdateAssetMetadata(): UseMutationResult<
+  AssetMetadata,
+  Error,
+  { assetId: AssetId; metadata: UpdateAssetMetadataInput }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -56,15 +63,15 @@ export function useUpdateAssetMetadata() {
         throw new Error(`Failed to update metadata: ${response.statusText}`);
       }
 
-      return response.json();
+      return (await response.json()) as AssetMetadata;
     },
     onSuccess: data => {
       // Invalidate and refetch the metadata
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['asset', data.assetId, 'metadata'],
       });
       // Also invalidate the assets list to reflect any title changes
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['assets'],
       });
     },

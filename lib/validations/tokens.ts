@@ -1,16 +1,34 @@
 import { z } from 'zod';
 
 // Local ApiResult wrapper schema (duplicate to avoid cross-file coupling)
-const apiOkSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
+type ApiOkSchema<T extends z.ZodTypeAny> = z.ZodObject<{
+  ok: z.ZodLiteral<true>;
+  data: T;
+}>;
+
+type ApiErrorSchema = z.ZodObject<{
+  ok: z.ZodLiteral<false>;
+  error: z.ZodObject<{
+    code: z.ZodString;
+    message: z.ZodString;
+  }>;
+}>;
+
+const apiOkSchema = <T extends z.ZodTypeAny>(dataSchema: T): ApiOkSchema<T> =>
   z.object({ ok: z.literal(true), data: dataSchema });
 
-const apiErrorSchema = z.object({
+const apiErrorSchema: ApiErrorSchema = z.object({
   ok: z.literal(false),
   error: z.object({ code: z.string(), message: z.string() }),
 });
 
-const apiResultSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
-  z.union([apiOkSchema(dataSchema), apiErrorSchema]);
+type ApiResultSchema<T extends z.ZodTypeAny> = z.ZodUnion<
+  [ApiOkSchema<T>, ApiErrorSchema]
+>;
+
+const apiResultSchema = <T extends z.ZodTypeAny>(
+  dataSchema: T
+): ApiResultSchema<T> => z.union([apiOkSchema(dataSchema), apiErrorSchema]);
 
 export const tokenSchema = z.object({
   id: z.string(),

@@ -63,7 +63,7 @@ export default function AssetsPage(): React.ReactElement {
 
   const assets = useMemo(() => {
     const pages = assetsPages?.pages ?? [];
-    return pages.flatMap(page => page.data);
+    return pages.flatMap((page: { data: AppAssetWithMetadata[] }) => page.data);
   }, [assetsPages]);
 
   const isInitialLoading = status === 'pending' && !assetsPages;

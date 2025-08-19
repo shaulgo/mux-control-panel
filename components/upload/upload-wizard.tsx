@@ -55,7 +55,7 @@ export function UploadWizard(): React.ReactElement {
         // Set form error for invalid URLs
         setError('urls', {
           type: 'validation',
-          message: validationResult.error.issues[0]?.message || 'Invalid URLs',
+          message: validationResult.error.issues[0]?.message ?? 'Invalid URLs',
         });
         setIsUploading(false);
         return;
@@ -121,10 +121,14 @@ export function UploadWizard(): React.ReactElement {
           // Create direct upload
           const du = await createDirectUpload();
           // Upload file bytes directly to Mux
+          const contentType =
+            file.type && file.type.length > 0
+              ? file.type
+              : 'application/octet-stream';
           const putRes = await fetch(du.url, {
             method: 'PUT',
             headers: {
-              'Content-Type': file.type || 'application/octet-stream',
+              'Content-Type': contentType,
             },
             body: file,
           });

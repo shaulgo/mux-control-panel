@@ -292,7 +292,7 @@ export function ModernAssetsTable({
                 <TableCell className="py-4">
                   <div className="space-y-1">
                     <p className="text-foreground text-sm font-medium">
-                      {asset.metadata?.title || 'Untitled'}
+                      {asset.metadata?.title ?? 'Untitled'}
                     </p>
                     {asset.metadata?.tags && asset.metadata.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">

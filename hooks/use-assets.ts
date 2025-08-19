@@ -9,13 +9,18 @@ import {
   deleteAssetResponseSchema,
   singleAssetResponseSchema,
 } from '@/lib/validations/upload';
-import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import type {
+  InfiniteData,
+  UseInfiniteQueryResult,
+  UseMutationResult,
+  UseQueryResult,
+} from '@tanstack/react-query';
 import {
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import type { z } from 'zod';
 
 type AssetListData = Extract<
@@ -73,7 +78,7 @@ type UseInfiniteAssetsParams = {
 
 export function useInfiniteAssets(
   params: UseInfiniteAssetsParams = {}
-) {
+): UseInfiniteQueryResult<InfiniteData<AssetListData>, Error> {
   const { limit = 25, search = '' } = params;
 
   return useInfiniteQuery({
@@ -81,9 +86,13 @@ export function useInfiniteAssets(
     initialPageParam: 1,
     getNextPageParam: (lastPage: AssetListData) =>
       lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined,
-    queryFn: async ({ pageParam }): Promise<AssetListData> => {
+    queryFn: async ({
+      pageParam,
+    }: {
+      pageParam: number;
+    }): Promise<AssetListData> => {
       const searchParams = buildSearchParams({
-        page: pageParam as number,
+        page: pageParam,
         limit,
         ...(search && { search }),
       });
