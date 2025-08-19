@@ -2,6 +2,7 @@
 
 import { AssetDrawer } from '@/components/assets/asset-drawer';
 import { AssetMetadataEditor } from '@/components/assets/asset-metadata-editor';
+import { AssetsGrid } from '@/components/assets/assets-grid';
 import { AssetsTable } from '@/components/assets/assets-table';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +29,7 @@ export default function AssetsPage(): React.ReactElement {
   const [editingAsset, setEditingAsset] = useState<AppAssetWithMetadata | null>(
     null
   );
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
 
   const {
     data: assetsPages,
@@ -192,18 +193,6 @@ export default function AssetsPage(): React.ReactElement {
 
         <div className="flex items-center space-x-2">
           <Button
-            variant={viewMode === 'table' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('table')}
-            className={
-              viewMode === 'table'
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'border-[#e5e7eb99] hover:bg-gray-50'
-            }
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="icon"
             onClick={() => setViewMode('grid')}
@@ -214,6 +203,18 @@ export default function AssetsPage(): React.ReactElement {
             }
           >
             <Grid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'table' ? 'default' : 'outline'}
+            size="icon"
+            onClick={() => setViewMode('table')}
+            className={
+              viewMode === 'table'
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'border-[#e5e7eb99] hover:bg-gray-50'
+            }
+          >
+            <List className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -233,12 +234,22 @@ export default function AssetsPage(): React.ReactElement {
             </div>
           ) : (
             <>
-              <AssetsTable
-                assets={assets}
-                onViewAsset={handleViewAsset}
-                onDeleteAsset={handleDeleteAsset}
-                isLoading={isInitialLoading}
-              />
+              {viewMode === 'grid' ? (
+                <AssetsGrid
+                  assets={assets}
+                  onViewAsset={handleViewAsset}
+                  onDeleteAsset={handleDeleteAsset}
+                  onEditMetadata={handleEditMetadata}
+                  isLoading={isInitialLoading}
+                />
+              ) : (
+                <AssetsTable
+                  assets={assets}
+                  onViewAsset={handleViewAsset}
+                  onDeleteAsset={handleDeleteAsset}
+                  isLoading={isInitialLoading}
+                />
+              )}
               <div ref={sentinelRef} className="h-10" />
               {isFetchingNextPage && (
                 <div className="text-muted-foreground py-2 text-center text-sm">
