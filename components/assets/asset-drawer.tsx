@@ -58,7 +58,7 @@ export function AssetDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="max-h-screen w-full overflow-y-auto sm:max-w-2xl">
+      <SheetContent className="max-h-screen w-full overflow-y-auto bg-white sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle>Asset Details</SheetTitle>
           <SheetDescription>
