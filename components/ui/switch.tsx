@@ -1,35 +1,29 @@
 'use client';
 
+import * as SwitchPrimitives from '@radix-ui/react-switch';
 import * as React from 'react';
 
-type SwitchProps = {
-  id?: string;
-  checked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
-  disabled?: boolean;
-  className?: string;
-};
+import { cn } from '@/lib/utils';
 
-export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ id, checked, onCheckedChange, disabled, className }, ref) => {
-    return (
-      <label htmlFor={id} className={className}>
-        <input
-          id={id}
-          ref={ref}
-          type="checkbox"
-          role="switch"
-          checked={checked}
-          onChange={e => onCheckedChange?.(e.target.checked)}
-          disabled={disabled}
-          className="peer sr-only"
-        />
-        <div className="peer-focus:ring-ring peer peer-checked:bg-primary peer-checked:border-primary relative inline-flex h-6 w-11 items-center rounded-full border-2 border-gray-300 bg-gray-400 ring-offset-2 transition-colors outline-none">
-          <span className="h-5 w-5 translate-x-1 rounded-full bg-white transition-transform duration-200 ease-in-out peer-checked:translate-x-5" />
-        </div>
-      </label>
-    );
-  }
-);
+const Switch = React.forwardRef<
+  React.ElementRef<typeof SwitchPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
+>(({ className, ...props }, ref) => (
+  <SwitchPrimitives.Root
+    ref={ref}
+    className={cn(
+      'ring-offset-background focus-visible:ring-ring peer data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=unchecked]:border-border inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[state=unchecked]:bg-gray-300',
+      className
+    )}
+    {...props}
+  >
+    <SwitchPrimitives.Thumb
+      className={cn(
+        'pointer-events-none block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0'
+      )}
+    />
+  </SwitchPrimitives.Root>
+));
+Switch.displayName = SwitchPrimitives.Root.displayName;
 
-Switch.displayName = 'Switch';
+export { Switch };
