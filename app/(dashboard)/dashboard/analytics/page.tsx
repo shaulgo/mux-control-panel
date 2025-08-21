@@ -152,7 +152,7 @@ export default function AnalyticsPage(): React.ReactElement {
     void load();
   }, []);
 
-  const totalViews = data?.overview.totalViews ?? 0;
+  const totalViews = data?.overview ? data.overview.totalViews : 0;
 
   const deviceComputed = useMemo(() => {
     const deviceBreakdown = data?.deviceBreakdown ?? [];

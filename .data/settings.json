@@ -1,0 +1,10 @@
+{
+  "playbackRestriction": {
+    "enabled": true,
+    "allowedDomains": ["*.mindfulspace.co.il"],
+    "allowNoReferrer": false,
+    "allowNoUserAgent": true,
+    "allowHighRiskUserAgent": true,
+    "restrictionId": "TBmi00JGE7wLiN0001lNlv4KymuvBBsx102bqK7xRSxhKmI"
+  }
+}
