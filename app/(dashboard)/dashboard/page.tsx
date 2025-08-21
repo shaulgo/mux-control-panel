@@ -91,7 +91,23 @@ export default function AssetsPage(): React.ReactElement {
       {/* Enhanced Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-blue-600">Assets</h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-4xl font-bold text-blue-600">Assets</h1>
+            <div className="rounded-lg bg-blue-100 px-3 py-1">
+              <span className="text-sm font-medium text-blue-600">
+                {assets.length} total{' '}
+                {(() => {
+                  const processingCount = assets.filter(
+                    (asset: AppAssetWithMetadata) =>
+                      asset.status === 'preparing'
+                  ).length;
+                  return processingCount > 0
+                    ? `(${processingCount} processing)`
+                    : '';
+                })()}
+              </span>
+            </div>
+          </div>
           <p className="text-muted-foreground text-lg">
             Manage your video assets and view their details
           </p>
@@ -104,77 +120,6 @@ export default function AssetsPage(): React.ReactElement {
           <Upload className="mr-2 h-4 w-4" />
           Upload Asset
         </Button>
-      </div>
-
-      {/* Enhanced Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border border-[#e5e7eb99] bg-[#fffffff2] shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-blue-200 hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">
-              Total Assets
-            </CardTitle>
-            <div className="rounded-lg bg-blue-100 p-2">
-              <Upload className="h-4 w-4 text-blue-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-foreground text-3xl font-bold">
-              {assets.length}
-            </div>
-            <p className="text-muted-foreground mt-1 text-xs">
-              <span className="text-green-600 dark:text-green-400">+12%</span>{' '}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-[#e5e7eb99] bg-[#fffffff2] shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-green-200 hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">
-              Ready Assets
-            </CardTitle>
-            <div className="rounded-lg bg-green-100 p-2">
-              <Grid className="h-4 w-4 text-green-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-foreground text-3xl font-bold">
-              {
-                assets.filter(
-                  (asset: AppAssetWithMetadata) => asset.status === 'ready'
-                ).length
-              }
-            </div>
-            <p className="text-muted-foreground mt-1 text-xs">
-              <span className="text-green-600 dark:text-green-400">+8%</span>{' '}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-[#e5e7eb99] bg-[#fffffff2] shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-orange-200 hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">
-              Processing
-            </CardTitle>
-            <div className="rounded-lg bg-orange-100 p-2">
-              <Search className="h-4 w-4 text-orange-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-foreground text-3xl font-bold">
-              {
-                assets.filter(
-                  (asset: AppAssetWithMetadata) => asset.status === 'preparing'
-                ).length
-              }
-            </div>
-            <p className="text-muted-foreground mt-1 text-xs">
-              <span className="text-blue-600 dark:text-blue-400">2</span> in
-              queue
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters and Controls */}

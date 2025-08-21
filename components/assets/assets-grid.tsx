@@ -59,8 +59,13 @@ export function AssetsGrid({
 }: AssetsGridProps): React.ReactElement {
   const [activeAssetId, setActiveAssetId] = useState<string | null>(null);
 
-  const getStatusBadge = (status: string): React.ReactElement => {
-    type StatusKey = 'ready' | 'preparing' | 'errored' | 'unknown';
+  const getStatusBadge = (status: string): React.ReactElement | null => {
+    // Don't show badge for 'ready' status
+    if (status === 'ready') {
+      return null;
+    }
+
+    type StatusKey = 'preparing' | 'errored' | 'unknown';
 
     const variants: Record<
       StatusKey,
@@ -69,11 +74,6 @@ export function AssetsGrid({
         className: string;
       }
     > = {
-      ready: {
-        variant: 'default',
-        className:
-          'bg-success-50 text-success-600 border-success-200 dark:bg-success-500/10 dark:text-success-400 dark:border-success-800',
-      },
       preparing: {
         variant: 'secondary',
         className:
@@ -91,7 +91,7 @@ export function AssetsGrid({
     };
 
     const key: StatusKey =
-      status === 'ready' || status === 'preparing' || status === 'errored'
+      status === 'preparing' || status === 'errored'
         ? (status as StatusKey)
         : 'unknown';
 
@@ -329,16 +329,6 @@ export function AssetsGrid({
                   <span className="text-muted-foreground text-xs">
                     {formatDate(asset.created_at)}
                   </span>
-                </div>
-              </div>
-
-              {/* Asset Info */}
-              <div className="text-muted-foreground space-y-1 text-xs">
-                <div className="flex items-center justify-between">
-                  <span>Asset ID:</span>
-                  <code className="bg-muted/50 rounded px-1 py-0.5 text-xs">
-                    {asset.id.slice(0, 8)}...
-                  </code>
                 </div>
               </div>
 
