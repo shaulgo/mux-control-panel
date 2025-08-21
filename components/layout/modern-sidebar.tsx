@@ -186,14 +186,7 @@ export function ModernSidebar({
                 <item.icon className="h-5 w-5" />
               </div>
 
-              {!isCollapsed && (
-                <>
-                  <span className="flex-1">{item.name}</span>
-                  <kbd className="bg-muted text-muted-foreground hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none group-hover:inline-flex">
-                    {item.shortcut}
-                  </kbd>
-                </>
-              )}
+              {!isCollapsed && <span className="flex-1">{item.name}</span>}
 
               {isActive && (
                 <div className="bg-accent-500 absolute right-2 h-2 w-2 rounded-full" />

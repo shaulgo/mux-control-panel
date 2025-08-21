@@ -75,15 +75,6 @@ export function EnhancedSearch({
         )}
       />
 
-      {/* Keyboard Shortcut Hint */}
-      {!isFocused && !value && (
-        <div className="absolute top-1/2 right-3 -translate-y-1/2">
-          <kbd className="bg-muted text-muted-foreground hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 transition-opacity select-none group-hover:opacity-100 sm:inline-flex">
-            /
-          </kbd>
-        </div>
-      )}
-
       {/* Clear Button */}
       {value && (
         <button

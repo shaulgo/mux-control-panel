@@ -99,7 +99,7 @@ export default function AnalyticsPage(): React.ReactElement {
     }
   };
 
-  useEffect((): void => {
+  useEffect(() => {
     async function load(): Promise<void> {
       try {
         const res: Response = await fetch('/api/analytics/summary?period=30', {
@@ -155,18 +155,18 @@ export default function AnalyticsPage(): React.ReactElement {
   const totalViews = data?.overview.totalViews ?? 0;
 
   const deviceComputed = useMemo(() => {
-    const total =
-      data?.deviceBreakdown.reduce((acc, d) => acc + d.views, 0) ?? 0;
-    return (data?.deviceBreakdown ?? []).map(d => {
+    const deviceBreakdown = data?.deviceBreakdown ?? [];
+    const total = deviceBreakdown.reduce((acc, d) => acc + d.views, 0);
+    return deviceBreakdown.map(d => {
       const percentage = total > 0 ? Math.round((d.views / total) * 100) : 0;
       return { ...d, percentage };
     });
   }, [data]);
 
   const geoComputed = useMemo(() => {
-    const total =
-      data?.geographicData.reduce((acc, g) => acc + g.views, 0) ?? 0;
-    return (data?.geographicData ?? []).map(g => {
+    const geographicData = data?.geographicData ?? [];
+    const total = geographicData.reduce((acc, g) => acc + g.views, 0);
+    return geographicData.map(g => {
       const percentage = total > 0 ? Math.round((g.views / total) * 100) : 0;
       return { ...g, percentage };
     });

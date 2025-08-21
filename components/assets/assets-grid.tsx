@@ -532,7 +532,7 @@ export function AssetsGrid({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs"
+                  className="flex-1 border-blue-200 bg-blue-50 text-xs text-blue-700 hover:bg-blue-100"
                   onClick={() => handleCopyHls(asset)}
                   disabled={!canCopy}
                   aria-label="Copy HLS URL"
