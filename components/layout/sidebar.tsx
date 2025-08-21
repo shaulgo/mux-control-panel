@@ -2,16 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  BarChart3,
-  Eye,
-  Key,
-  Library,
-  LogOut,
-  Settings,
-  Upload,
-  Video,
-} from 'lucide-react';
+import { BarChart3, Eye, LogOut, Settings, Upload, Video } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -29,12 +20,6 @@ const navigation = [
     shortcut: 'g u',
   },
   {
-    name: 'Libraries',
-    href: '/dashboard/libraries',
-    icon: Library,
-    shortcut: 'g l',
-  },
-  {
     name: 'Usage',
     href: '/dashboard/usage',
     icon: BarChart3,
@@ -45,12 +30,6 @@ const navigation = [
     href: '/dashboard/analytics',
     icon: Eye,
     shortcut: 'g n',
-  },
-  {
-    name: 'Upload Tokens',
-    href: '/dashboard/tokens',
-    icon: Key,
-    shortcut: 'g t',
   },
   {
     name: 'Settings',

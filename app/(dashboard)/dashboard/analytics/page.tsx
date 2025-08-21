@@ -22,6 +22,7 @@ import {
   Eye,
   Globe,
   Monitor,
+  RefreshCw,
   Smartphone,
   Tablet,
   TrendingUp,
@@ -39,9 +40,66 @@ export default function AnalyticsPage(): React.ReactElement {
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('30');
+
+  const loadData = async (selectedPeriod: string = period): Promise<void> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res: Response = await fetch(
+        `/api/analytics/summary?period=${selectedPeriod}`,
+        {
+          headers: { Accept: 'application/json' },
+          cache: 'no-cache',
+          next: { revalidate: 300 }, // Cache for 5 minutes
+        }
+      );
+      const json: unknown = await res.json();
+      if (!res.ok) {
+        // If HTTP not ok, try to read an error message from the body if present
+        const message =
+          typeof json === 'object' &&
+          json !== null &&
+          'error' in json &&
+          typeof (json as { error?: { message?: unknown } }).error ===
+            'object' &&
+          (json as { error?: { message?: unknown } }).error &&
+          'message' in (json as { error?: { message?: unknown } }).error!
+            ? String(
+                (
+                  (json as { error?: { message?: unknown } }).error as {
+                    message?: unknown;
+                  }
+                ).message
+              )
+            : `HTTP ${res.status}`;
+        throw new Error(message);
+      }
+      // Validate shape and set data
+      if (
+        typeof json === 'object' &&
+        json !== null &&
+        'ok' in json &&
+        (json as { ok?: unknown }).ok &&
+        'data' in json
+      ) {
+        setData((json as { data: AnalyticsSummary }).data);
+      } else {
+        throw new Error('Unexpected response shape');
+      }
+    } catch (e) {
+      setError(
+        e && typeof e === 'object' && 'message' in e
+          ? String((e as { message?: unknown }).message)
+          : 'Failed to load analytics'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect((): void => {
-    let cancelled = false;
     async function load(): Promise<void> {
       try {
         const res: Response = await fetch('/api/analytics/summary?period=30', {
@@ -70,35 +128,28 @@ export default function AnalyticsPage(): React.ReactElement {
           throw new Error(message);
         }
         // Validate shape and set data
-        if (!cancelled) {
-          if (
-            typeof json === 'object' &&
-            json !== null &&
-            'ok' in json &&
-            (json as { ok?: unknown }).ok === true &&
-            'data' in json
-          ) {
-            setData((json as { data: AnalyticsSummary }).data);
-          } else {
-            throw new Error('Unexpected response shape');
-          }
+        if (
+          typeof json === 'object' &&
+          json !== null &&
+          'ok' in json &&
+          (json as { ok?: unknown }).ok &&
+          'data' in json
+        ) {
+          setData((json as { data: AnalyticsSummary }).data);
+        } else {
+          throw new Error('Unexpected response shape');
         }
       } catch (e) {
-        if (!cancelled) {
-          setError(
-            e && typeof e === 'object' && 'message' in e
-              ? String((e as { message?: unknown }).message)
-              : 'Failed to load analytics'
-          );
-        }
+        setError(
+          e && typeof e === 'object' && 'message' in e
+            ? String((e as { message?: unknown }).message)
+            : 'Failed to load analytics'
+        );
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     }
     void load();
-    return ((): void => {
-      cancelled = true;
-    })();
   }, []);
 
   const totalViews = data?.overview.totalViews ?? 0;
@@ -143,7 +194,15 @@ export default function AnalyticsPage(): React.ReactElement {
           <h1 className="text-foreground text-4xl font-bold tracking-tight">
             Analytics
           </h1>
-          <p className="text-destructive max-w-2xl text-lg">{error}</p>
+          <p className="text-destructive max-w-2xl text-lg">
+            Failed to load analytics: {error}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-offset-2 focus:outline-none"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -153,12 +212,47 @@ export default function AnalyticsPage(): React.ReactElement {
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-foreground text-4xl font-bold tracking-tight">
-          Analytics
-        </h1>
-        <p className="text-muted-foreground max-w-2xl text-lg">
-          Track video performance, viewer engagement, and audience insights
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-foreground text-4xl font-bold tracking-tight">
+              Analytics
+            </h1>
+            <p className="text-muted-foreground max-w-2xl text-lg">
+              Track video performance, viewer engagement, and audience insights
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <label
+                htmlFor="period-select"
+                className="text-muted-foreground text-sm font-medium"
+              >
+                Period:
+              </label>
+              <select
+                id="period-select"
+                value={period}
+                onChange={e => {
+                  setPeriod(e.target.value);
+                  loadData(e.target.value).catch(console.error);
+                }}
+                className="border-input bg-background focus:border-primary focus:ring-primary rounded-md border px-3 py-1 text-sm shadow-sm focus:ring-1 focus:outline-none"
+              >
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+              </select>
+            </div>
+            <button
+              onClick={() => void loadData()}
+              disabled={loading}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+            >
+              <RefreshCw className={`mr-1 h-4 w-4`} />
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Overview Cards */}

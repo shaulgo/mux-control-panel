@@ -6,8 +6,6 @@ import {
   BarChart3,
   ChevronLeft,
   Eye,
-  Key,
-  Library,
   LogOut,
   Settings,
   Upload,
@@ -31,12 +29,6 @@ const navigation = [
     shortcut: 'g u',
   },
   {
-    name: 'Libraries',
-    href: '/dashboard/libraries',
-    icon: Library,
-    shortcut: 'g l',
-  },
-  {
     name: 'Usage',
     href: '/dashboard/usage',
     icon: BarChart3,
@@ -47,12 +39,6 @@ const navigation = [
     href: '/dashboard/analytics',
     icon: Eye,
     shortcut: 'g n',
-  },
-  {
-    name: 'Upload Tokens',
-    href: '/dashboard/tokens',
-    icon: Key,
-    shortcut: 'g t',
   },
   {
     name: 'Settings',

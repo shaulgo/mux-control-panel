@@ -2,6 +2,7 @@ import { resultToHttp } from '@/lib/api/http';
 import { requireAuth } from '@/lib/auth/session';
 import { Err, Ok, type Result } from '@/lib/mux/types';
 import {
+  getAssetWithRetry,
   getTopAssetsByViews,
   getTotalViews,
   getViewsByCountry,
@@ -60,12 +61,36 @@ async function getAnalyticsSummary(
       getTopAssetsByViews(5, timeframe),
     ]);
 
-    // Note: We do not have asset titles without an extra join. For now, return id only.
-    const topVideos = topAssets.map(a => ({
-      id: a.assetId,
-      title: a.assetId,
-      views: a.views,
-    }));
+    // Fetch actual video titles from Mux
+    const topVideos = await Promise.all(
+      topAssets.map(async a => {
+        try {
+          const assetResult = await getAssetWithRetry(a.assetId);
+          if (assetResult.ok && assetResult.data) {
+            const title = assetResult.data.passthrough
+              ? String(assetResult.data.passthrough)
+              : `Video ${assetResult.data.id.slice(-8)}`;
+            return {
+              id: a.assetId,
+              title,
+              views: a.views,
+            };
+          } else {
+            return {
+              id: a.assetId,
+              title: `Video ${a.assetId.slice(-8)}`,
+              views: a.views,
+            };
+          }
+        } catch {
+          return {
+            id: a.assetId,
+            title: `Video ${a.assetId.slice(-8)}`,
+            views: a.views,
+          };
+        }
+      })
+    );
 
     const payload: AnalyticsSummary = {
       overview: { totalViews },

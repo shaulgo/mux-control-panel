@@ -62,7 +62,7 @@ export function AssetDrawer({
         <SheetHeader>
           <SheetTitle>Asset Details</SheetTitle>
           <SheetDescription>
-            View asset information, playback details, and analytics
+            View asset information and analytics
           </SheetDescription>
         </SheetHeader>
 
@@ -96,9 +96,8 @@ export function AssetDrawer({
           )}
 
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="playback">Playback</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -225,92 +224,6 @@ export function AssetDrawer({
                     Asset processing failed. Please try uploading again.
                   </p>
                 </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="playback" className="space-y-4">
-              {typedAsset.playback_ids && typedAsset.playback_ids.length > 0 ? (
-                <div className="space-y-4">
-                  {/* Inline Mux Player */}
-                  <div className="rounded-lg border p-3">
-                    <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
-                      <MuxPlayer
-                        playbackId={typedAsset.playback_ids[0]?.id as string}
-                        streamType="on-demand"
-                        autoPlay={false}
-                        style={{ width: '100%', height: '100%' }}
-                      />
-                    </div>
-                    <p className="text-muted-foreground mt-2 text-xs">
-                      Secure playback uses the first playback ID. Additional IDs
-                      are listed below.
-                    </p>
-                  </div>
-
-                  {/* Playback IDs and URLs */}
-                  {typedAsset.playback_ids.map(playbackId => (
-                    <div key={playbackId.id} className="rounded-lg border p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">Playback ID</h4>
-                          <code className="text-muted-foreground text-sm">
-                            {playbackId.id}
-                          </code>
-                        </div>
-                        <Badge variant="outline">{playbackId.policy}</Badge>
-                      </div>
-
-                      <div className="mt-4 space-y-2">
-                        <div>
-                          <label className="text-sm font-medium">HLS URL</label>
-                          <div className="flex items-center space-x-2">
-                            <code className="text-sm">
-                              https://stream.mux.com/{playbackId.id}.m3u8
-                            </code>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                copyToClipboard(
-                                  `https://stream.mux.com/${playbackId.id}.m3u8`
-                                )
-                              }
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium">
-                            Thumbnail URL
-                          </label>
-                          <div className="flex items-center space-x-2">
-                            <code className="text-sm">
-                              https://image.mux.com/{playbackId.id}
-                              /thumbnail.jpg
-                            </code>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                copyToClipboard(
-                                  `https://image.mux.com/${playbackId.id}/thumbnail.jpg`
-                                )
-                              }
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">
-                  No playback IDs available
-                </p>
               )}
             </TabsContent>
 

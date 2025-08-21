@@ -192,6 +192,7 @@ export default function AssetsPage(): React.ReactElement {
                   assets={assets}
                   onViewAsset={handleViewAsset}
                   onDeleteAsset={handleDeleteAsset}
+                  onEditMetadata={handleEditMetadata}
                   isLoading={isInitialLoading}
                 />
               )}
