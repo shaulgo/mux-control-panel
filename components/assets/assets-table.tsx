@@ -12,14 +12,13 @@ import {
 } from '@/components/ui/table';
 import type { AppAssetWithMetadata } from '@/lib/mux/types';
 import { formatDate, formatDuration } from '@/lib/utils';
-import { Edit3, Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 type AssetsTableProps = {
   assets: AppAssetWithMetadata[];
   onViewAsset: (asset: AppAssetWithMetadata) => void;
   onDeleteAsset: (assetId: string) => void;
-  onEditMetadata?: (asset: AppAssetWithMetadata) => void;
   isLoading?: boolean;
 };
 
@@ -27,7 +26,6 @@ export function AssetsTable({
   assets,
   onViewAsset,
   onDeleteAsset,
-  onEditMetadata,
   isLoading = false,
 }: AssetsTableProps): React.ReactElement {
   const getStatusBadge = (status: string): React.ReactElement => {
@@ -120,16 +118,7 @@ export function AssetsTable({
             </TableCell>
             <TableCell>
               <div className="flex items-center space-x-2">
-                {onEditMetadata && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEditMetadata(asset)}
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    <span className="sr-only">Edit asset metadata</span>
-                  </Button>
-                )}
+                {/* Edit metadata removed */}
                 <Button
                   variant="ghost"
                   size="icon"

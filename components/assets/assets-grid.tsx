@@ -10,27 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  useUpdateAssetMetadata,
-  type UpdateAssetMetadataInput,
-} from '@/hooks/use-asset-metadata';
+// Metadata editing removed
 import type { AppAssetWithMetadata } from '@/lib/mux/types';
 import { cn, formatDate, formatDuration } from '@/lib/utils';
 import MuxPlayer from '@mux/mux-player-react';
-import {
-  Check,
-  Copy,
-  Edit3,
-  Eye,
-  MoreVertical,
-  Pause,
-  Play,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Copy, Eye, MoreVertical, Pause, Play, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -66,19 +50,7 @@ export function AssetsGrid({
   isLoading = false,
 }: AssetsGridProps): React.ReactElement {
   const [activeAssetId, setActiveAssetId] = useState<string | null>(null);
-  const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState<{
-    title: string;
-    description: string;
-    tags: string[];
-  }>({
-    title: '',
-    description: '',
-    tags: [],
-  });
-  const [newTag, setNewTag] = useState('');
-
-  const updateMetadata = useUpdateAssetMetadata();
+  // Metadata editing removed
 
   const getStatusBadge = (status: string): React.ReactElement | null => {
     // Don't show badge for 'ready' status
@@ -153,16 +125,6 @@ export function AssetsGrid({
       case 'view':
         onViewAsset(asset);
         break;
-      case 'edit-metadata':
-        // Start inline editing
-        setEditingAssetId(asset.id);
-        setEditFormData({
-          title: asset.metadata?.title ?? '',
-          description: asset.metadata?.description ?? '',
-          tags: asset.metadata?.tags ?? [],
-        });
-        setNewTag('');
-        break;
       case 'delete':
         if (
           confirm(
@@ -177,67 +139,7 @@ export function AssetsGrid({
     }
   };
 
-  const handleSaveEdit = async (asset: AppAssetWithMetadata): Promise<void> => {
-    try {
-      const metadataUpdate: UpdateAssetMetadataInput = {};
-
-      if (editFormData.title !== (asset.metadata?.title ?? '')) {
-        metadataUpdate.title = editFormData.title;
-      }
-      if (editFormData.description !== (asset.metadata?.description ?? '')) {
-        metadataUpdate.description = editFormData.description;
-      }
-      if (
-        JSON.stringify(editFormData.tags) !==
-        JSON.stringify(asset.metadata?.tags ?? [])
-      ) {
-        metadataUpdate.tags = editFormData.tags;
-      }
-
-      if (Object.keys(metadataUpdate).length > 0) {
-        await updateMetadata.mutateAsync({
-          assetId: asset.id,
-          metadata: metadataUpdate,
-        });
-      }
-
-      setEditingAssetId(null);
-      setEditFormData({ title: '', description: '', tags: [] });
-      setNewTag('');
-    } catch (error) {
-      console.error('Failed to update metadata:', error);
-    }
-  };
-
-  const handleCancelEdit = (): void => {
-    setEditingAssetId(null);
-    setEditFormData({ title: '', description: '', tags: [] });
-    setNewTag('');
-  };
-
-  const addTag = (): void => {
-    if (newTag.trim() && !editFormData.tags.includes(newTag.trim())) {
-      setEditFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, newTag.trim()],
-      }));
-      setNewTag('');
-    }
-  };
-
-  const removeTag = (tagToRemove: string): void => {
-    setEditFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove),
-    }));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTag();
-    }
-  };
+  // Metadata editing removed
 
   // Loading skeleton
   if (isLoading) {
@@ -297,7 +199,7 @@ export function AssetsGrid({
                 <MuxPlayer
                   playbackId={playbackId}
                   streamType="on-demand"
-                  autoPlay={false}
+                  autoPlay={true}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -373,150 +275,37 @@ export function AssetsGrid({
               {/* Title and Status */}
               <div className="space-y-2">
                 <div className="flex items-start justify-between">
-                  {editingAssetId === asset.id ? (
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          value={editFormData.title}
-                          onChange={e =>
-                            setEditFormData(prev => ({
-                              ...prev,
-                              title: e.target.value,
-                            }))
-                          }
-                          placeholder="Asset title"
-                          className="text-sm font-medium"
-                          maxLength={255}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleSaveEdit(asset)}
-                          disabled={updateMetadata.isPending}
-                          className="h-6 w-6"
-                          aria-label="Save changes"
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleCancelEdit}
-                          className="h-6 w-6"
-                          aria-label="Cancel editing"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Textarea
-                          value={editFormData.description}
-                          onChange={e =>
-                            setEditFormData(prev => ({
-                              ...prev,
-                              description: e.target.value,
-                            }))
-                          }
-                          placeholder="Asset description"
-                          className="text-xs"
-                          rows={2}
-                          maxLength={1000}
-                        />
-
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap gap-1">
-                            {editFormData.tags.map(tag => (
-                              <Badge
-                                key={tag}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {tag}
-                                <button
-                                  type="button"
-                                  onClick={() => removeTag(tag)}
-                                  className="hover:text-destructive ml-1"
-                                >
-                                  <X className="h-2 w-2" />
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Input
-                              value={newTag}
-                              onChange={e => setNewTag(e.target.value)}
-                              onKeyPress={handleKeyPress}
-                              placeholder="Add tag"
-                              className="h-6 text-xs"
-                              maxLength={50}
-                            />
-                            <Button
-                              type="button"
-                              onClick={addTag}
-                              disabled={
-                                !newTag.trim() || editFormData.tags.length >= 20
-                              }
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-2"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          {editFormData.tags.length >= 20 && (
-                            <p className="text-muted-foreground text-xs">
-                              Maximum of 20 tags allowed
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <h3 className="text-foreground line-clamp-2 flex-1 text-sm font-medium">
-                        {asset.metadata?.title ?? 'Untitled'}
-                      </h3>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:bg-muted ml-2 h-6 w-6 flex-shrink-0"
-                            aria-label="Open menu"
-                          >
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-40 bg-white"
-                        >
-                          <DropdownMenuItem
-                            onClick={() => handleAction('view', asset)}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAction('edit-metadata', asset)}
-                          >
-                            <Edit3 className="mr-2 h-4 w-4" />
-                            Edit Metadata
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleAction('delete', asset)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </>
-                  )}
+                  <h3 className="text-foreground line-clamp-2 flex-1 text-sm font-medium">
+                    {asset.metadata?.title ?? 'Untitled'}
+                  </h3>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-muted ml-2 h-6 w-6 flex-shrink-0"
+                        aria-label="Open menu"
+                      >
+                        <MoreVertical className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40 bg-white">
+                      <DropdownMenuItem
+                        onClick={() => handleAction('view', asset)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleAction('delete', asset)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -540,14 +329,7 @@ export function AssetsGrid({
                   <Copy className="mr-1 h-3 w-3" />
                   Copy M3U8
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleAction('edit-metadata', asset)}
-                  aria-label="Edit metadata"
-                >
-                  <Edit3 className="h-3 w-3" />
-                </Button>
+                {/* Edit metadata removed */}
                 <Button
                   variant="outline"
                   size="sm"

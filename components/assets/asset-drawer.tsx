@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { AppAssetWithMetadata } from '@/lib/mux/types';
 import { formatDate, formatDuration } from '@/lib/utils';
 import MuxPlayer from '@mux/mux-player-react';
-import { Copy, Edit3 } from 'lucide-react';
+import { Copy } from 'lucide-react';
 import Image from 'next/image';
 
 type AssetDrawerProps = {
@@ -27,7 +27,6 @@ export function AssetDrawer({
   asset,
   open,
   onOpenChange,
-  onEditMetadata,
 }: AssetDrawerProps): React.ReactElement | null {
   if (!asset) return null;
 
@@ -159,16 +158,6 @@ export function AssetDrawer({
               <div className="border-t pt-4">
                 <div className="mb-3 flex items-center justify-between">
                   <h4 className="text-sm font-semibold">Metadata</h4>
-                  {onEditMetadata && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEditMetadata(typedAsset)}
-                    >
-                      <Edit3 className="mr-1 h-3 w-3" />
-                      Edit
-                    </Button>
-                  )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">

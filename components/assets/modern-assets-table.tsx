@@ -23,7 +23,6 @@ import { cn, formatDate, formatDuration } from '@/lib/utils';
 import {
   Copy,
   Download,
-  Edit3,
   Eye,
   MoreVertical,
   Play,
@@ -37,7 +36,6 @@ type ModernAssetsTableProps = {
   assets: AppAssetWithMetadata[];
   onViewAsset: (asset: AppAssetWithMetadata) => void;
   onDeleteAsset: (assetId: string) => void;
-  onEditMetadata?: (asset: AppAssetWithMetadata) => void;
   onDuplicateAsset?: (assetId: string) => void;
   isLoading?: boolean;
 };
@@ -46,7 +44,6 @@ export function ModernAssetsTable({
   assets,
   onViewAsset,
   onDeleteAsset,
-  onEditMetadata,
   onDuplicateAsset,
   isLoading = false,
 }: ModernAssetsTableProps): React.ReactElement {
@@ -115,9 +112,7 @@ export function ModernAssetsTable({
       case 'view':
         onViewAsset(asset);
         break;
-      case 'edit-metadata':
-        onEditMetadata?.(asset);
-        break;
+      // edit-metadata removed
       case 'duplicate':
         onDuplicateAsset?.(asset.id);
         break;
@@ -354,16 +349,7 @@ export function ModernAssetsTable({
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
-                      {onEditMetadata && (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleRowAction('edit-metadata', asset)
-                          }
-                        >
-                          <Edit3 className="mr-2 h-4 w-4" />
-                          Edit Metadata
-                        </DropdownMenuItem>
-                      )}
+                      {/* Edit metadata removed */}
                       <DropdownMenuItem
                         onClick={() => handleRowAction('copy-id', asset)}
                       >

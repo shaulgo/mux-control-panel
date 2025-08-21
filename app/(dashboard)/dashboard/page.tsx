@@ -1,7 +1,6 @@
 'use client';
 
 import { AssetDrawer } from '@/components/assets/asset-drawer';
-import { AssetMetadataEditor } from '@/components/assets/asset-metadata-editor';
 import { AssetsGrid } from '@/components/assets/assets-grid';
 import { AssetsTable } from '@/components/assets/assets-table';
 import { Button } from '@/components/ui/button';
@@ -25,10 +24,7 @@ export default function AssetsPage(): React.ReactElement {
   const [selectedAsset, setSelectedAsset] =
     useState<AppAssetWithMetadata | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [metadataEditorOpen, setMetadataEditorOpen] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<AppAssetWithMetadata | null>(
-    null
-  );
+  // Metadata editor removed
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
 
   const {
@@ -47,10 +43,7 @@ export default function AssetsPage(): React.ReactElement {
     setDrawerOpen(true);
   };
 
-  const handleEditMetadata = (asset: AppAssetWithMetadata): void => {
-    setEditingAsset(asset);
-    setMetadataEditorOpen(true);
-  };
+  const handleEditMetadata = (): void => {};
 
   const handleDeleteAsset = async (id: string): Promise<void> => {
     if (confirm('Are you sure you want to delete this asset?')) {
@@ -184,7 +177,6 @@ export default function AssetsPage(): React.ReactElement {
                   assets={assets}
                   onViewAsset={handleViewAsset}
                   onDeleteAsset={handleDeleteAsset}
-                  onEditMetadata={handleEditMetadata}
                   isLoading={isInitialLoading}
                 />
               ) : (
@@ -192,7 +184,6 @@ export default function AssetsPage(): React.ReactElement {
                   assets={assets}
                   onViewAsset={handleViewAsset}
                   onDeleteAsset={handleDeleteAsset}
-                  onEditMetadata={handleEditMetadata}
                   isLoading={isInitialLoading}
                 />
               )}
@@ -220,14 +211,7 @@ export default function AssetsPage(): React.ReactElement {
         onEditMetadata={handleEditMetadata}
       />
 
-      {/* Metadata Editor */}
-      {editingAsset && (
-        <AssetMetadataEditor
-          assetId={assetId(editingAsset.id)}
-          open={metadataEditorOpen}
-          onOpenChange={setMetadataEditorOpen}
-        />
-      )}
+      {/* Metadata Editor removed */}
     </div>
   );
 }

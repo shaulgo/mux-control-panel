@@ -20,7 +20,7 @@ export default defineConfig({
         '**/*.config.*',
         '**/coverage/**',
         '.next/',
-        'prisma/',
+        // prisma removed
         'scripts/',
       ],
       thresholds: {

@@ -1,6 +1,5 @@
 import { resultToHttp } from '@/lib/api/http';
 import { requireAuth } from '@/lib/auth/session';
-import { getAssetMetadata } from '@/lib/db/asset-metadata';
 import { muxVideo } from '@/lib/mux/client';
 import {
   type AppAssetWithMetadata,
@@ -68,47 +67,12 @@ async function listAssets(request: NextRequest): Promise<AssetListResult> {
         })
       : response.data;
 
-    // Fetch metadata for each asset
-    const assetsWithMetadata: AppAssetWithMetadata[] = await Promise.all(
-      filteredAssets.map(async (asset): Promise<AppAssetWithMetadata> => {
-        try {
-          // Debug log to check the created_at format
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              'Asset created_at:',
-              asset.created_at,
-              typeof asset.created_at
-            );
-          }
-
-          const metadata = await getAssetMetadata(asset.id);
-          const result: AppAssetWithMetadata = {
-            ...asset,
-            id: assetId(asset.id),
-            metadata: metadata
-              ? {
-                  title: metadata.title,
-                  description: metadata.description,
-                  tags: metadata.tags,
-                  createdAt: metadata.createdAt.toISOString(),
-                  updatedAt: metadata.updatedAt.toISOString(),
-                }
-              : null,
-          };
-          return result;
-        } catch (error) {
-          // If metadata fetch fails, continue without metadata
-          console.warn(
-            `Failed to fetch metadata for asset ${asset.id}:`,
-            error
-          );
-          const result: AppAssetWithMetadata = {
-            ...asset,
-            id: assetId(asset.id),
-            metadata: null,
-          };
-          return result;
-        }
+    // Map to app asset shape without extra metadata layer (feature removed)
+    const assetsWithMetadata: AppAssetWithMetadata[] = filteredAssets.map(
+      asset => ({
+        ...asset,
+        id: assetId(asset.id),
+        metadata: null,
       })
     );
 
