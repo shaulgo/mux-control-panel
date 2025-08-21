@@ -340,12 +340,6 @@ export function AssetsGrid({
                     {asset.id.slice(0, 8)}...
                   </code>
                 </div>
-                {asset.aspect_ratio && (
-                  <div className="flex items-center justify-between">
-                    <span>Ratio:</span>
-                    <span>{asset.aspect_ratio}</span>
-                  </div>
-                )}
               </div>
 
               {/* Action Buttons */}
