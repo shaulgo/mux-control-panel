@@ -1,19 +1,6 @@
-import { QueryClient } from '@tanstack/react-query';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { vi } from 'vitest';
-
-// Create a default query client for tests
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-    mutations: {
-      retry: false,
-    },
-  },
-});
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
